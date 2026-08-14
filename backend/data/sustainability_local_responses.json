@@ -102,6 +102,17 @@
     },
 
     {
+      "id": "sdg_advice_menu",
+      "category": "community",
+      "sdgs": [11,12,13],
+      "triggers": [
+        "i need sdg advice"
+      ],
+      "mode": "static",
+      "answer": "Sure! 🌱 What would you like advice on?"
+    },
+
+    {
       "id": "sdg_11",
       "category": "community",
       "sdgs": [11],
