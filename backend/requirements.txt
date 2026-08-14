@@ -6,3 +6,4 @@ pymupdf
 python-docx
 pydantic
 sentence-transformers
+chromadb
