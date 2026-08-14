@@ -58,7 +58,7 @@ export function TopFilters({
           className="input-control"
           aria-label="Filter by status"
         >
-          <option value="all">All Statuses</option>
+          <option value="all">All Status</option>
           {filters.statuses.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
