@@ -50,6 +50,9 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.48.1
+        version: 2.112.3
       clsx:
         specifier: ^2.1.1
         version: 2.1.1

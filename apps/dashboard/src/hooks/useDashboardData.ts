@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getDashboardDataProvider } from "@/lib/data";
+import { getSupabaseClient } from "@/lib/supabase";
 import type { DashboardData, ReportStatus } from "@/lib/data/types";
 
 export type DashboardQueryState =
@@ -33,6 +34,17 @@ export function useDashboardData(params: DashboardQueryParams) {
 
   useEffect(() => {
     load();
+    let supabase;
+    try {
+      supabase = getSupabaseClient();
+    } catch {
+      return;
+    }
+    const channel = supabase
+      .channel("authority-dashboard-reports")
+      .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => void load())
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
   }, [load]);
 
   return { state, source: provider.source, reload: load };

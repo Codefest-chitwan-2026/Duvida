@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
-import { MOCK_ORGANIZATION_NAME } from "@/data/mock-dashboard-data";
 
 export const metadata: Metadata = {
   title: "Municipal Authority Dashboard — Sustainable Community Digital Twin",
@@ -13,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <div className="app-layout">
-          <Sidebar organizationName={MOCK_ORGANIZATION_NAME} />
+          <Sidebar organizationName={process.env.NEXT_PUBLIC_ORGANIZATION_NAME ?? "Municipal Authority"} />
           <div className="main-content">{children}</div>
         </div>
       </body>

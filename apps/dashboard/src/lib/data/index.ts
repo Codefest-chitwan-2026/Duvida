@@ -6,11 +6,11 @@
 // swap the export below — no component code needs to change, since every
 // component consumes `DashboardData` through props, not this module directly.
 
-import { mockDashboardDataProvider } from "@/lib/data/mock-provider";
+import { supabaseDashboardDataProvider } from "@/lib/data/supabase-provider";
 import type { DashboardDataProvider } from "@/lib/data/types";
 
 export function getDashboardDataProvider(): DashboardDataProvider {
-  return mockDashboardDataProvider;
+  return supabaseDashboardDataProvider;
 }
 
 export * from "@/lib/data/types";
