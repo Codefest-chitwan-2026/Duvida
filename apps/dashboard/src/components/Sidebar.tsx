@@ -16,19 +16,18 @@ import {
   Building2,
 } from "lucide-react";
 
-// Only "Dashboard" is a real, built destination for this deliverable.
-// The rest are intentionally disabled/non-interactive: their screens have
-// not been built yet, so they must not be clickable placeholders.
+// Everything lives on the single dashboard page today, so nav items point at
+// in-page sections (closest matching widget) rather than separate routes.
 const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; enabled: boolean }[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, enabled: true },
-  { href: "/reports", label: "Reports", icon: FileText, enabled: false },
-  { href: "/quests", label: "Quests", icon: Award, enabled: false },
-  { href: "/users", label: "Users", icon: Users, enabled: false },
-  { href: "/verifications", label: "Verifications", icon: ShieldCheck, enabled: false },
-  { href: "/analytics", label: "Analytics", icon: BarChart3, enabled: false },
-  { href: "/rewards", label: "Rewards & Tokens", icon: Gift, enabled: false },
-  { href: "/announcements", label: "Announcements", icon: Megaphone, enabled: false },
-  { href: "/settings", label: "Settings", icon: Settings, enabled: false },
+  { href: "/#recent-reports", label: "Reports", icon: FileText, enabled: true },
+  { href: "/", label: "Quests", icon: Award, enabled: true },
+  { href: "/#top-reporters", label: "Users", icon: Users, enabled: true },
+  { href: "/#status-breakdown", label: "Verifications", icon: ShieldCheck, enabled: true },
+  { href: "/#analytics-section", label: "Analytics", icon: BarChart3, enabled: true },
+  { href: "/#impact-summary", label: "Rewards & Tokens", icon: Gift, enabled: true },
+  { href: "/#recent-activities", label: "Announcements", icon: Megaphone, enabled: true },
+  { href: "/", label: "Settings", icon: Settings, enabled: true },
 ];
 
 export function Sidebar({ organizationName }: { organizationName: string }) {

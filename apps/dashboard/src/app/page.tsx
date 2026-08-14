@@ -67,21 +67,31 @@ export default function DashboardOverviewPage() {
         <StatCards summary={data.summary} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "40% 60%", gap: "20px", marginBottom: "20px" }}>
+      <div id="analytics-section" style={{ display: "grid", gridTemplateColumns: "40% 60%", gap: "20px", marginBottom: "20px" }}>
         <CategoryDonut items={data.categoryBreakdown} />
         <ReportsTrendChart trend={data.reportsTrend} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px", marginBottom: "20px" }}>
-        <RecentReports reports={data.recentReports} />
-        <TopReporters reporters={data.topReporters} />
-        <StatusDonut items={data.statusBreakdown} />
+        <div id="recent-reports">
+          <RecentReports reports={data.recentReports} />
+        </div>
+        <div id="top-reporters">
+          <TopReporters reporters={data.topReporters} />
+        </div>
+        <div id="status-breakdown">
+          <StatusDonut items={data.statusBreakdown} />
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px" }}>
-        <RecentActivities activities={data.recentActivities} />
+        <div id="recent-activities">
+          <RecentActivities activities={data.recentActivities} />
+        </div>
         <TodaySummary metrics={data.todaySummary} />
-        <ImpactSummary metrics={data.impactSummary} />
+        <div id="impact-summary">
+          <ImpactSummary metrics={data.impactSummary} />
+        </div>
       </div>
     </div>
   );
