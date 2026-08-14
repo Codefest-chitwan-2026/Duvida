@@ -2,12 +2,33 @@ node_modules/
 .next/
 .expo/
 dist/
+web-build/
 coverage/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+gradle.properties
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Local environment files
 .env
 .env.local
 .env.*.local
-gradle.properties
-*.log
+
+# OS and local services
 .DS_Store
+*.pem
 supabase/.branches/
 supabase/.temp/

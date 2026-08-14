@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Report an Issue",
+    "slug": "report-issue-app",
+    "scheme": "reportissue",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to attach them to issue reports.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take photos for issue reports."
+        }
+      ]
+    ],
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {},
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    }
+  }
+}

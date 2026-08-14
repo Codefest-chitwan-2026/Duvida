@@ -7,5 +7,10 @@ export default function Welcome() {
   const router = useRouter();
   const { signIn } = useAuth();
 
-  return <WelcomeScreen onGetStarted={signIn} onLogIn={() => router.push("/login")} />;
+  return (
+    <WelcomeScreen
+      onGetStarted={signIn}
+      onLogIn={() => router.push("/login")}
+    />
+  );
 }

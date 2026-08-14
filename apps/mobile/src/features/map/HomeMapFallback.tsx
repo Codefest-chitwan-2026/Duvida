@@ -3,7 +3,6 @@ import {
   Dimensions,
   Image,
   PanResponder,
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -11,7 +10,7 @@ import {
 
 import { IssueMarker } from "@/components/IssueMarker";
 import { PlayerMarker } from "@/components/PlayerMarker";
-import { mockIssues, DEMO_CENTER, type MapIssue } from "@/features/map/mockIssues";
+import { mockIssues, DEMO_CENTER } from "@/features/map/mockIssues";
 import { colors } from "@/theme/colors";
 import type { Coordinate } from "@/services/location/useUserLocation";
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -110,8 +110,8 @@ export function NotificationDrawer({
   const screenWidth = Dimensions.get("window").width;
   const drawerWidth = Math.min(screenWidth * 0.88, 380);
 
-  const slideAnim = useRef(new Animated.Value(drawerWidth)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [slideAnim] = useState(() => new Animated.Value(drawerWidth));
+  const [fadeAnim] = useState(() => new Animated.Value(0));
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
   useEffect(() => {

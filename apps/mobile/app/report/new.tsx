@@ -1,18 +1,5 @@
-import { useLocalSearchParams } from "expo-router";
-
-import { PlaceholderScreen } from "@/components/PlaceholderScreen";
+import { Redirect } from "expo-router";
 
 export default function NewReportScreen() {
-  const { issueId } = useLocalSearchParams<{ issueId?: string }>();
-
-  return (
-    <PlaceholderScreen
-      title="New report"
-      subtitle={
-        issueId
-          ? `Report flow for "${issueId}" (location -> details -> evidence) lands here.`
-          : "Report flow (location -> details -> evidence) lands here."
-      }
-    />
-  );
+  return <Redirect href="/report-issue/category" />;
 }

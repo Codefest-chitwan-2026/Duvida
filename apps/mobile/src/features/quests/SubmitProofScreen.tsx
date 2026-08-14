@@ -47,9 +47,7 @@ export function SubmitProofScreen({ quest, coinBalance }: SubmitProofScreenProps
       Alert.alert("After photo required", "Add an after photo before submitting proof.");
       return;
     }
-    Alert.alert("Proof submitted", "A moderator will review your submission shortly.", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+    router.push({ pathname: "/quests/[id]/verification", params: { id: quest.id } });
   };
 
   return (
