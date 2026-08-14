@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from "@/components/PlaceholderScreen";
+import { ProfileScreen as Profile } from "@/features/profile/ProfileScreen";
 
 export default function ProfileScreen() {
-  return <PlaceholderScreen title="Profile" subtitle="Account, impact, and settings land here." />;
+  return <Profile />;
 }

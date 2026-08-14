@@ -10,6 +10,8 @@ type MapControlsProps = {
   onCompassPress?: () => void;
   onLocatePress?: () => void;
   onToggle3D?: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
 };
 
 export function MapControls({
@@ -18,6 +20,8 @@ export function MapControls({
   onCompassPress,
   onLocatePress,
   onToggle3D,
+  onZoomIn,
+  onZoomOut,
 }: MapControlsProps) {
   return (
     <View style={[styles.container, { bottom: bottomOffset }]} pointerEvents="box-none">
@@ -30,6 +34,16 @@ export function MapControls({
       <ControlButton onPress={onToggle3D} active={is3D}>
         <Text style={[styles.label3D, is3D && styles.label3DActive]}>3D</Text>
       </ControlButton>
+      {onZoomIn && (
+        <ControlButton onPress={onZoomIn}>
+          <Ionicons name="add" size={22} color={colors.textPrimary} />
+        </ControlButton>
+      )}
+      {onZoomOut && (
+        <ControlButton onPress={onZoomOut}>
+          <Ionicons name="remove" size={22} color={colors.textPrimary} />
+        </ControlButton>
+      )}
     </View>
   );
 }

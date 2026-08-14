@@ -26,7 +26,11 @@ function RootNavigator() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="report/new"
-        options={{ presentation: "modal", headerShown: true, title: "New report" }}
+        options={{ presentation: "modal", headerShown: false }}
+      />
+      <Stack.Screen
+        name="report-issue"
+        options={{ presentation: "modal", headerShown: false }}
       />
     </Stack>
   );

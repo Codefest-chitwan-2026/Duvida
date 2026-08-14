@@ -37,8 +37,7 @@ export function ProgressRing({ percent, size = 64, strokeWidth = 6 }: ProgressRi
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
-          rotation={-90}
-          origin={`${center}, ${center}`}
+          transform={`rotate(-90 ${center} ${center})`}
         />
       </Svg>
       <View style={StyleSheet.absoluteFill}>
