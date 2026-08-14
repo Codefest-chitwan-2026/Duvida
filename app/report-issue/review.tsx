@@ -7,6 +7,7 @@ import Header from '../../components/common/Header';
 import Button from '../../components/common/Button';
 import IssueProgress from '../../components/issue/IssueProgress';
 import ReviewSummaryRow from '../../components/issue/ReviewSummaryRow';
+import IssueIdCard from '../../components/issue/IssueIdCard';
 import { useIssueForm } from '../../hooks/useIssueForm';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
@@ -42,6 +43,8 @@ export default function ReviewScreen() {
       <IssueProgress currentStep={4} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <IssueIdCard issueId={formData.issueId} />
+
         <View style={styles.photoWrapper}>
           <View style={styles.photo}>
             <Text style={styles.photoEmoji}>🕳️</Text>

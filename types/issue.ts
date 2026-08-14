@@ -21,6 +21,7 @@ export interface IssueLocation {
 }
 
 export interface IssueFormData {
+  issueId: string;
   category: IssueCategoryId;
   description: string;
   severity: SeverityLevel;
