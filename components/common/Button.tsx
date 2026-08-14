@@ -3,6 +3,7 @@ import {
   StyleProp,
   StyleSheet,
   Text,
+  TextStyle,
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
@@ -16,6 +17,7 @@ interface ButtonProps {
   variant?: 'primary' | 'outline';
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export default function Button({
@@ -24,6 +26,7 @@ export default function Button({
   variant = 'primary',
   disabled = false,
   style,
+  textStyle,
 }: ButtonProps) {
   const isPrimary = variant === 'primary';
 
@@ -39,7 +42,13 @@ export default function Button({
       disabled={disabled}
       activeOpacity={0.8}
     >
-      <Text style={[styles.label, isPrimary ? styles.labelPrimary : styles.labelOutline]}>
+      <Text
+        style={[
+          styles.label,
+          isPrimary ? styles.labelPrimary : styles.labelOutline,
+          textStyle,
+        ]}
+      >
         {label}
       </Text>
     </TouchableOpacity>

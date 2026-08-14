@@ -46,7 +46,11 @@ export default function ReviewScreen() {
           <View style={styles.photo}>
             <Text style={styles.photoEmoji}>🕳️</Text>
           </View>
-          <TouchableOpacity style={styles.editButton} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.editButton}
+            activeOpacity={0.8}
+            onPress={() => router.push('/report-issue/category')}
+          >
             <Text style={styles.editIcon}>✎</Text>
           </TouchableOpacity>
         </View>
@@ -84,7 +88,14 @@ export default function ReviewScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label="Submit" onPress={handleSubmit} />
+        <Button label="Submit Report  📤" onPress={handleSubmit} />
+        <Button
+          label="Back"
+          variant="outline"
+          onPress={() => router.back()}
+          style={styles.backButton}
+          textStyle={styles.backButtonLabel}
+        />
       </View>
     </SafeAreaView>
   );
@@ -192,7 +203,15 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+    gap: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  backButton: {
+    borderColor: colors.primaryGreen,
+  },
+  backButtonLabel: {
+    color: colors.primaryGreen,
   },
 });
