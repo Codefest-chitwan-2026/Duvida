@@ -5,9 +5,10 @@
   "scripts": {
     "start": "corepack pnpm --filter mobile start",
     "web": "corepack pnpm --filter mobile exec expo start --web",
-    "dev": "pnpm --parallel --filter admin --filter mobile dev",
+    "dev": "pnpm --parallel --filter admin --filter mobile --filter dashboard dev",
     "dev:admin": "pnpm --filter admin dev",
     "dev:mobile": "pnpm --filter mobile dev",
+    "dev:dashboard": "pnpm --filter dashboard dev",
     "build": "pnpm --recursive build",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck"
