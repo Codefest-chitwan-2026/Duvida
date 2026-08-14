@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { MapControls } from "@/components/MapControls";
+import { CharacterCompanion } from "@/components/CharacterCompanion";
 import { NotificationDrawer, INITIAL_NOTIFICATIONS, type NotificationItem } from "@/components/NotificationDrawer";
 import { TopBar } from "@/components/TopBar";
 import { HomeMapView, type HomeMapHandle } from "@/features/map/HomeMapView";
@@ -206,6 +206,14 @@ export default function HomeScreen() {
         onZoomIn={() => mapRef.current?.zoomIn?.()}
         onZoomOut={() => mapRef.current?.zoomOut?.()}
       />
+
+      {/* Side-animated Character Companion with speech bubble */}
+      {!selectedIssue && (
+        <CharacterCompanion
+          bottomOffset={insets.bottom + 85}
+          onQuestShortcut={() => setSelectedCategory("quests")}
+        />
+      )}
 
       {/* Selected Marker Detail Card / Bottom Drawer */}
       {selectedIssue && (
