@@ -20,11 +20,22 @@ export interface IssueLocation {
   longitude: number;
 }
 
+export type MediaKind = 'image' | 'video';
+
+export interface MediaItem {
+  id: string;
+  uri: string;
+  name: string;
+  mimeType: string;
+  fileSize?: number;
+  mediaType: MediaKind;
+}
+
 export interface IssueFormData {
   issueId: string;
   category: IssueCategoryId;
   description: string;
   severity: SeverityLevel;
   location: IssueLocation;
-  photos: string[];
+  media: MediaItem[];
 }
