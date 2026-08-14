@@ -73,7 +73,11 @@
         "low carbon transport",
         "reduce transport emissions",
         "walking",
-        "cycling"
+        "cycling",
+        "travel sustainably",
+        "travel sustainability",
+        "green transport",
+        "eco friendly transport"
       ],
       "mode": "static",
       "answer": "🚶 Sustainable Transport\n\nTransportation is a major contributor to greenhouse gas emissions. Choosing cleaner travel options can improve air quality and create healthier communities.\n\nYou can make transport more sustainable by:\n• Walking or cycling for short distances\n• Using public transportation when available\n• Sharing rides when possible\n• Reducing unnecessary vehicle trips\n• Supporting cleaner transportation options\n\nSustainable transport reduces emissions, improves public health, and helps cities become more livable.\n\n🌍 Related SDGs:\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action"
@@ -88,10 +92,52 @@
         "help community",
         "cleanup",
         "citizen participation",
-        "environmental action"
+        "environmental action",
+        "help my community",
+        "community support",
+        "community sustainability"
       ],
       "mode": "static",
       "answer": "🏘️ Community Action\n\nSustainability cannot be achieved by individuals alone. Communities working together can identify local problems, create solutions, and build a cleaner and more resilient environment.\n\nYou can contribute by:\n• Joining local cleanup activities\n• Reporting environmental problems\n• Helping maintain public spaces\n• Sharing sustainability awareness\n• Supporting community improvement projects\n\nWhen citizens participate actively, small actions become collective impact and create stronger sustainable communities.\n\n🌍 Related SDGs:\nSDG 10 - Reduced Inequalities\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action"
+    },
+
+    {
+      "id": "sdg_11",
+      "category": "community",
+      "sdgs": [11],
+      "triggers": [
+        "what is sdg 11",
+        "sdg 11",
+        "sustainable cities and communities"
+      ],
+      "mode": "static",
+      "answer": "SDG 11 is Sustainable Cities and Communities. It focuses on making human settlements inclusive, safe, resilient, and sustainable."
+    },
+
+    {
+      "id": "sdg_12",
+      "category": "waste",
+      "sdgs": [12],
+      "triggers": [
+        "what is sdg 12",
+        "sdg 12",
+        "responsible consumption and production"
+      ],
+      "mode": "static",
+      "answer": "SDG 12 is Responsible Consumption and Production. It focuses on using resources more efficiently, reducing waste, and improving how goods are produced and consumed."
+    },
+
+    {
+      "id": "sdg_13",
+      "category": "community",
+      "sdgs": [13],
+      "triggers": [
+        "what is sdg 13",
+        "sdg 13",
+        "climate action"
+      ],
+      "mode": "static",
+      "answer": "SDG 13 is Climate Action. It calls for urgent action to address climate change and strengthen resilience to climate-related impacts."
     }
   ]
 }
