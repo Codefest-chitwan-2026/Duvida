@@ -71,6 +71,16 @@ export default function ReviewScreen() {
             <Text style={[styles.badgeText, { color: severity.color }]}>{severity.label}</Text>
           </View>
         </ReviewSummaryRow>
+
+        <View style={styles.confirmationBox}>
+          <View style={styles.confirmationIconBadge}>
+            <Text style={styles.confirmationIcon}>✓</Text>
+          </View>
+          <Text style={styles.confirmationTitle}>Looks good!</Text>
+          <Text style={styles.confirmationText}>
+            Please review all details before submitting your report.
+          </Text>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -146,6 +156,38 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+  },
+  confirmationBox: {
+    marginTop: spacing.md,
+    alignItems: 'center',
+    backgroundColor: '#F1F3F5',
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+  },
+  confirmationIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.greenSurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  confirmationIcon: {
+    fontSize: fontSize.lg,
+    color: colors.primaryGreen,
+    fontWeight: fontWeight.bold,
+  },
+  confirmationTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  confirmationText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   footer: {
     paddingHorizontal: spacing.lg,
