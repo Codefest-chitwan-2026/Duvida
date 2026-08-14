@@ -29,3 +29,12 @@ class CommunityIssue(BaseModel):
     address: Optional[str] = None
     city: Optional[str] = None
     created_at: Optional[str] = None
+
+
+class GeneratedQuest(BaseModel):
+    title: str
+    description: str
+    quest_type: str
+    status: str = "active"
+    points_reward: int
+    community_id: str
