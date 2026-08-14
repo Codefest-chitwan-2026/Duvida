@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -15,3 +15,17 @@ class ChatReply(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+
+
+class CommunityIssue(BaseModel):
+    id: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category_id: Optional[str] = None
+    status: str
+    severity: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    created_at: Optional[str] = None
