@@ -25,7 +25,7 @@ interface SeveritySelectorProps {
 
 export default function SeveritySelector({ value, onChange }: SeveritySelectorProps) {
   return (
-    <View style={styles.row}>
+    <View style={styles.row} accessibilityRole="radiogroup">
       {OPTIONS.map((option) => {
         const isSelected = option.level === value;
         return (
@@ -40,6 +40,9 @@ export default function SeveritySelector({ value, onChange }: SeveritySelectorPr
                 borderColor: option.color,
               },
             ]}
+            accessibilityRole="radio"
+            accessibilityLabel={`${option.label} severity`}
+            accessibilityState={{ selected: isSelected, checked: isSelected }}
           >
             <Text style={[styles.label, { color: isSelected ? colors.white : option.color }]}>
               {option.label}

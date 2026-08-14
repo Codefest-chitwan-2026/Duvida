@@ -8,13 +8,25 @@ interface LocationRowProps {
   address: string;
   coordinates: string;
   onPress?: () => void;
+  accessibilityLabel?: string;
 }
 
-export default function LocationRow({ address, coordinates, onPress }: LocationRowProps) {
+export default function LocationRow({
+  address,
+  coordinates,
+  onPress,
+  accessibilityLabel,
+}: LocationRowProps) {
   return (
-    <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.container}>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
+      style={styles.container}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? `Location: ${address}`}
+    >
       <View style={styles.pinBadge}>
-        <View style={styles.pinDot} />
+        <Text style={styles.pinIcon}>🗺️</Text>
       </View>
       <View style={styles.textGroup}>
         <Text style={styles.address} numberOfLines={1}>
@@ -49,11 +61,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  pinDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: colors.primaryGreen,
+  pinIcon: {
+    fontSize: 18,
   },
   textGroup: {
     flex: 1,
