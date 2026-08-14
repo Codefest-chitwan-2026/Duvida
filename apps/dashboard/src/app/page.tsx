@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { LoadingState, EmptyState, ErrorState } from "@/components/DashboardStates";
-import { DemoDataBadge } from "@/components/DemoDataBadge";
 import { TopFilters } from "@/components/TopFilters";
 import { StatCards } from "@/components/StatCards";
 import { CategoryDonut } from "@/components/CategoryDonut";
@@ -48,7 +47,6 @@ export default function DashboardOverviewPage() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <h1 className="page-title">Dashboard Overview</h1>
-            <DemoDataBadge source={source} />
           </div>
           <p className="page-subtitle">Review citizen reports and verified sustainability impact across your municipality.</p>
         </div>
@@ -67,12 +65,12 @@ export default function DashboardOverviewPage() {
         <StatCards summary={data.summary} />
       </div>
 
-      <div id="analytics-section" style={{ display: "grid", gridTemplateColumns: "40% 60%", gap: "20px", marginBottom: "20px" }}>
+      <div id="analytics-section" className="dashboard-analytics-grid">
         <CategoryDonut items={data.categoryBreakdown} />
         <ReportsTrendChart trend={data.reportsTrend} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+      <div className="dashboard-grid-3col">
         <div id="recent-reports">
           <RecentReports reports={data.recentReports} />
         </div>
@@ -80,11 +78,11 @@ export default function DashboardOverviewPage() {
           <TopReporters reporters={data.topReporters} />
         </div>
         <div id="status-breakdown">
-          <StatusDonut items={data.statusBreakdown} />
+          <StatusDonut items={data.statusBreakdown} selectedStatus={statusFilter} onStatusChange={setStatusFilter} />
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px" }}>
+      <div className="dashboard-grid-3col" style={{ marginBottom: 0 }}>
         <div id="recent-activities">
           <RecentActivities activities={data.recentActivities} />
         </div>
