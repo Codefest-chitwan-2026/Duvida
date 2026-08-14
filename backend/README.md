@@ -1,32 +1,62 @@
-# Sustainability Advisor API
+# Sustainability Advisor backend
 
-FastAPI service for the EcoBot tab. It retrieves relevant passages from documents in
-`sustainability_knowledge/`, sends that context to Gemini, and returns an answer with optional
-quest suggestions.
+FastAPI service for EcoBot in `apps/mobile`. It provides:
+
+- deterministic offline answers for common sustainability and SDG questions;
+- Gemini answers for questions that do not match a local response;
+- PDF, DOCX, and TXT document loading;
+- overlapping document chunks and sentence-transformer embeddings;
+- persistent ChromaDB retrieval for document-grounded answers;
+- optional quest suggestions returned with each answer.
 
 ## Setup
 
-```bash
-python -m venv venv
+From the repository root on Windows PowerShell:
+
+```powershell
+python -m venv backend\venv
+backend\venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+Copy-Item backend\.env.example backend\.env
 ```
 
-Activate the environment, then install dependencies and configure Gemini:
+Add a valid `GEMINI_API_KEY` to `backend/.env`. The local static responses do
+not call Gemini, but unmatched questions require the key.
 
-```bash
-pip install -r requirements.txt
-cp .env.example .env
+## Add knowledge and build the retrieval index
+
+Place PDF, DOCX, or TXT reference documents in `sustainability_knowledge/`,
+then run from `backend/`:
+
+```powershell
+.\venv\Scripts\python.exe scripts\debug_vector_store.py
 ```
 
-Set `GEMINI_API_KEY` in `.env`, add PDF, DOCX, or TXT reference documents to
-`sustainability_knowledge/`, and start the API:
+The first build downloads the `all-MiniLM-L6-v2` embedding model. The generated
+Chroma index is stored in `backend/chroma_db/` and is ignored by Git.
 
-```bash
-uvicorn app.main:app --reload
+## Run
+
+From `backend/`:
+
+```powershell
+.\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The vector index is built automatically at startup. Configure the mobile app with
-`EXPO_PUBLIC_API_BASE_URL`; `http://127.0.0.1:8000` works for web and iOS Simulator, while a
-physical device needs the computer's LAN address.
+For a physical phone, set `EXPO_PUBLIC_API_BASE_URL` in `apps/mobile/.env` to
+the computer's LAN address, for example `http://192.168.1.20:8000`, then
+restart Expo. `127.0.0.1` refers to the phone itself and will not reach the
+computer.
 
-- `GET /health` reports API and knowledge-index status.
-- `POST /chat` accepts `{"message": "..."}` and returns an answer plus optional quests.
+## API
+
+- `GET /health` returns service status and loaded knowledge character count.
+- `POST /chat` accepts `{"message": "..."}` and returns
+  `{"answer": "...", "quests": [{"title": "...", "description": "..."}]}`.
+
+## Tests
+
+From the repository root:
+
+```powershell
+backend\venv\Scripts\python.exe -m pytest backend\tests -q
+```

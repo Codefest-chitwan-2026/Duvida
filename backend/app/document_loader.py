@@ -1,14 +1,14 @@
 import pathlib
 from typing import Iterator, Tuple
 
-import fitz
+import pymupdf
 from docx import Document
 
 KNOWLEDGE_DIR = pathlib.Path(__file__).resolve().parent.parent / "sustainability_knowledge"
 
 
 def iter_documents() -> Iterator[Tuple[str, str]]:
-    """Yield the filename and extracted text for every supported knowledge document."""
+    """Yield (filename, extracted_text) for each supported file in the knowledge dir."""
     if not KNOWLEDGE_DIR.exists():
         return
 
@@ -32,10 +32,10 @@ def load_knowledge_text() -> str:
 
 
 def _read_pdf(path: pathlib.Path) -> str:
-    with fitz.open(path) as document:
-        return "\n".join(page.get_text() for page in document)
+    with pymupdf.open(path) as doc:
+        return "\n".join(page.get_text() for page in doc)
 
 
 def _read_docx(path: pathlib.Path) -> str:
-    document = Document(path)
-    return "\n".join(paragraph.text for paragraph in document.paragraphs)
+    doc = Document(path)
+    return "\n".join(p.text for p in doc.paragraphs)

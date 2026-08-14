@@ -3,6 +3,7 @@ from typing import List
 
 from .document_loader import iter_documents
 
+# Character-based, not token-based — good enough for a debug/inspection pass.
 DEFAULT_CHUNK_SIZE = 1000
 DEFAULT_CHUNK_OVERLAP = 200
 
@@ -14,11 +15,7 @@ class Chunk:
     text: str
 
 
-def chunk_text(
-    text: str,
-    chunk_size: int = DEFAULT_CHUNK_SIZE,
-    overlap: int = DEFAULT_CHUNK_OVERLAP,
-) -> List[str]:
+def chunk_text(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_CHUNK_OVERLAP) -> List[str]:
     if chunk_size <= 0:
         raise ValueError("chunk_size must be positive")
     if overlap < 0 or overlap >= chunk_size:
@@ -28,26 +25,22 @@ def chunk_text(
     if not text:
         return []
 
+    step = chunk_size - overlap
+    length = len(text)
     pieces = []
     start = 0
-    step = chunk_size - overlap
-
-    while start < len(text):
-        end = min(start + chunk_size, len(text))
+    while start < length:
+        end = min(start + chunk_size, length)
         piece = text[start:end].strip()
         if piece:
             pieces.append(piece)
-        if end == len(text):
+        if end == length:
             break
         start += step
-
     return pieces
 
 
-def chunk_documents(
-    chunk_size: int = DEFAULT_CHUNK_SIZE,
-    overlap: int = DEFAULT_CHUNK_OVERLAP,
-) -> List[Chunk]:
+def chunk_documents(chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_CHUNK_OVERLAP) -> List[Chunk]:
     chunks: List[Chunk] = []
     for filename, text in iter_documents():
         for index, piece in enumerate(chunk_text(text, chunk_size, overlap)):
