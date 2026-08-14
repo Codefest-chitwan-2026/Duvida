@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "@/theme/colors";
 
-export type TabKey = "home" | "quests" | "wallet" | "profile";
+export type TabKey = "home" | "quests" | "wallet" | "advisor" | "profile";
 
 type BottomNavBarProps = {
   active: TabKey;
@@ -16,6 +16,7 @@ const TABS: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap }
   { key: "home", label: "Map", icon: "map" },
   { key: "quests", label: "Quests", icon: "trophy" },
   { key: "wallet", label: "Wallet", icon: "wallet" },
+  { key: "advisor", label: "EcoBot", icon: "chatbubble-ellipses" },
   { key: "profile", label: "Profile", icon: "person" },
 ];
 
@@ -25,25 +26,29 @@ export function BottomNavBar({ active, onSelectTab, onCreatePress }: BottomNavBa
   return (
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <View style={styles.bar}>
-        {TABS.slice(0, 2).map((tab) => (
-          <TabButton
-            key={tab.key}
-            tab={tab}
-            isActive={active === tab.key}
-            onPress={() => onSelectTab(tab.key)}
-          />
-        ))}
+        <View style={styles.tabGroup}>
+          {TABS.slice(0, 2).map((tab) => (
+            <TabButton
+              key={tab.key}
+              tab={tab}
+              isActive={active === tab.key}
+              onPress={() => onSelectTab(tab.key)}
+            />
+          ))}
+        </View>
 
         <View style={styles.fabSpacer} />
 
-        {TABS.slice(2).map((tab) => (
-          <TabButton
-            key={tab.key}
-            tab={tab}
-            isActive={active === tab.key}
-            onPress={() => onSelectTab(tab.key)}
-          />
-        ))}
+        <View style={styles.tabGroup}>
+          {TABS.slice(2).map((tab) => (
+            <TabButton
+              key={tab.key}
+              tab={tab}
+              isActive={active === tab.key}
+              onPress={() => onSelectTab(tab.key)}
+            />
+          ))}
+        </View>
       </View>
 
       <Pressable style={styles.fabWrap} onPress={onCreatePress} hitSlop={8}>
@@ -97,6 +102,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
+  },
+  tabGroup: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
   },
   tabButton: {
     flex: 1,

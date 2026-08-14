@@ -199,6 +199,7 @@ const TAB_TO_PATH = {
   home: "/",
   quests: "/quests",
   wallet: "/wallet",
+  advisor: "/advisor",
   profile: "/profile",
 } as const;
 

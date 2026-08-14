@@ -7,6 +7,7 @@ const PATH_TO_TAB: Record<string, TabKey> = {
   "/": "home",
   "/quests": "quests",
   "/wallet": "wallet",
+  "/advisor": "advisor",
   "/profile": "profile",
 };
 
@@ -14,6 +15,7 @@ const TAB_TO_PATH: Record<TabKey, string> = {
   home: "/",
   quests: "/quests",
   wallet: "/wallet",
+  advisor: "/advisor",
   profile: "/profile",
 };
 
@@ -28,6 +30,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="index" />
         <Tabs.Screen name="quests" />
         <Tabs.Screen name="wallet" />
+        <Tabs.Screen name="advisor" />
         <Tabs.Screen name="profile" />
       </Tabs>
 
