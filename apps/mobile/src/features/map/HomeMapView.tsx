@@ -1,16 +1,18 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { StyleSheet } from "react-native";
-import Mapbox from "@rnmapbox/maps";
+import type { Camera } from "@rnmapbox/maps";
 
 import { IssueMarker } from "@/components/IssueMarker";
 import { PlayerMarker } from "@/components/PlayerMarker";
 import { mockIssues } from "@/features/map/mockIssues";
 import { HomeMapFallback, type HomeMapHandle } from "@/features/map/HomeMapFallback";
 import { env, hasMapboxToken } from "@/lib/env";
+import { getMapbox } from "@/lib/mapbox";
 import type { Coordinate } from "@/services/location/useUserLocation";
 
 const CITY_ZOOM_LEVEL = 16.5;
 const TILT_PITCH = 60;
+const Mapbox = getMapbox();
 
 type HomeMapViewProps = {
   center: Coordinate;
@@ -28,12 +30,13 @@ export type { HomeMapHandle };
  */
 export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
   ({ center, is3D, selectedCategory = "all", selectedIssueId, onIssuePress }, ref) => {
-    const cameraRef = useRef<Mapbox.Camera>(null);
+    const cameraRef = useRef<Camera>(null);
     const fallbackRef = useRef<HomeMapHandle>(null);
+    const canUseNativeMap = hasMapboxToken && Mapbox !== null;
 
     useImperativeHandle(ref, () => ({
       recenter: () => {
-        if (hasMapboxToken) {
+        if (canUseNativeMap) {
           cameraRef.current?.setCamera({
             centerCoordinate: [center.longitude, center.latitude],
             zoomLevel: CITY_ZOOM_LEVEL,
@@ -44,25 +47,25 @@ export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
         }
       },
       resetBearing: () => {
-        if (hasMapboxToken) {
+        if (canUseNativeMap) {
           cameraRef.current?.setCamera({ heading: 0, animationDuration: 300 });
         } else {
           fallbackRef.current?.resetBearing();
         }
       },
       zoomIn: () => {
-        if (!hasMapboxToken) {
+        if (!canUseNativeMap) {
           fallbackRef.current?.zoomIn?.();
         }
       },
       zoomOut: () => {
-        if (!hasMapboxToken) {
+        if (!canUseNativeMap) {
           fallbackRef.current?.zoomOut?.();
         }
       },
     }));
 
-    if (!hasMapboxToken) {
+    if (!canUseNativeMap || !Mapbox) {
       return (
         <HomeMapFallback
           ref={fallbackRef}
