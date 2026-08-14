@@ -1,4 +1,4 @@
-# Team Everest — Sustainable Community Digital Twin
+# Team Duvidha — Sustainable Community Digital Twin
 
 Monorepo for the citizen mobile app, authority admin dashboard, and shared Supabase backend.
 

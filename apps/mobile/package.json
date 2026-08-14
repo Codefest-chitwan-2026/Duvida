@@ -1,0 +1,47 @@
+{
+  "name": "mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start --dev-client",
+    "dev:android": "expo start --dev-client",
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "prebuild": "expo prebuild",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@duvidha/shared": "workspace:*",
+    "@expo/metro-runtime": "~57.0.9",
+    "@expo/vector-icons": "^15.1.1",
+    "@rnmapbox/maps": "^10.3.5",
+    "@supabase/supabase-js": "^2.48.1",
+    "expo": "~57.0.12",
+    "expo-constants": "~57.0.10",
+    "expo-dev-client": "~57.0.11",
+    "expo-font": "~57.0.1",
+    "expo-image-picker": "~57.0.9",
+    "expo-linking": "~57.0.5",
+    "expo-location": "~57.0.9",
+    "expo-router": "~57.0.12",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~19.2.18",
+    "babel-preset-expo": "~57.0.6",
+    "eslint": "^9.19.0",
+    "eslint-config-expo": "~57.0.1",
+    "typescript": "~6.0.3"
+  }
+}

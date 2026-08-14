@@ -3,8 +3,10 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter './apps/*' dev",
-    "build": "pnpm --recursive --filter './apps/*' build",
+    "dev": "pnpm --parallel --filter admin --filter mobile dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "dev:mobile": "pnpm --filter mobile dev",
+    "build": "pnpm --recursive build",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck"
   }

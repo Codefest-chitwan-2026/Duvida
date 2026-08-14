@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Team Duvidha",
+    "slug": "team-duvidha-mobile",
+    "scheme": "teamduvidha",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "org.teamduvidha.mobile",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Team Duvidha uses your location to show nearby reports and quests on the map."
+      }
+    },
+    "android": {
+      "package": "org.teamduvidha.mobile",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-dev-client",
+      "expo-location",
+      "@rnmapbox/maps",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Team Duvidha uses your photos to attach proof to quest submissions and reports.",
+          "cameraPermission": "Team Duvidha uses your camera to capture proof for quest submissions and reports."
+        }
+      ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}
