@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 const colors = {
   primary: '#1DA34C',
@@ -194,17 +197,44 @@ export default function SustainabilityAdvisorScreen({
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [draft, setDraft] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('report');
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const sendMessage = (text: string) => {
+  const sendMessage = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
-    const now = new Date();
-    const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (!trimmed || isSending) return;
+
+    const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     setMessages((prev) => [
       ...prev,
-      { id: `u-${prev.length}`, sender: 'user', time: `Today ${time}`, text: trimmed },
+      { id: `u-${Date.now()}`, sender: 'user', time: `Today ${time}`, text: trimmed },
     ]);
     setDraft('');
+    setError(null);
+    setIsSending(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+
+      const data: { answer: string } = await response.json();
+      const botTime = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      setMessages((prev) => [
+        ...prev,
+        { id: `b-${Date.now()}`, sender: 'bot', time: botTime, body: { kind: 'text', text: data.answer } },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -259,6 +289,8 @@ export default function SustainabilityAdvisorScreen({
         </View>
       </ScrollView>
 
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
       <View style={styles.inputBar}>
         <Ionicons name="leaf-outline" size={18} color={colors.primary} style={styles.inputIcon} />
         <TextInput
@@ -269,9 +301,18 @@ export default function SustainabilityAdvisorScreen({
           onChangeText={setDraft}
           onSubmitEditing={() => sendMessage(draft)}
           returnKeyType="send"
+          editable={!isSending}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={() => sendMessage(draft)}>
-          <Ionicons name="send" size={18} color="#fff" />
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={() => sendMessage(draft)}
+          disabled={isSending}
+        >
+          {isSending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="send" size={18} color="#fff" />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -407,6 +448,12 @@ const styles = StyleSheet.create({
   listIndexText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   bulletEmoji: { fontSize: 14, marginTop: 1 },
   listItemText: { flex: 1, fontSize: 13.5, color: colors.ink, lineHeight: 19 },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
