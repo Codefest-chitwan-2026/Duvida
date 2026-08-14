@@ -1,0 +1,369 @@
+{
+  "version": 1,
+  "purpose": "Local deterministic sustainability responses and simple guided conversations before falling back to RAG/Gemini.",
+  "fallback": {
+    "action": "rag",
+    "note": "If no local intent/flow matches, send the query to the existing RAG pipeline."
+  },
+  "quest_categories": [
+    "water",
+    "waste",
+    "greenery",
+    "energy",
+    "transport",
+    "community"
+  ],
+  "sdg_focus": {
+    "primary": [
+      11,
+      12,
+      13
+    ],
+    "secondary": [
+      1,
+      2,
+      3,
+      4,
+      10
+    ]
+  },
+  "intents": [
+    {
+      "id": "water_tip",
+      "category": "water",
+      "sdgs": [
+        6,
+        11,
+        12,
+        13
+      ],
+      "triggers": [
+        "how can i save water",
+        "water saving tip",
+        "save water at home",
+        "reduce water use",
+        "reduce water consumption"
+      ],
+      "mode": "guided",
+      "start_response": "I can give you a quick water-saving plan. First, how long is your usual shower or bath?",
+      "flow_id": "water_personalization"
+    },
+    {
+      "id": "waste_tip",
+      "category": "waste",
+      "sdgs": [
+        11,
+        12,
+        13
+      ],
+      "triggers": [
+        "waste saving tip",
+        "reduce waste",
+        "how can i recycle",
+        "recycling tip",
+        "manage household waste"
+      ],
+      "mode": "static",
+      "answer": "Start by separating recyclable, organic, and residual waste. Avoid single-use items where practical and reuse containers before disposing of them.",
+      "quests": [
+        {
+          "title": "Sort today's household waste",
+          "description": "Separate recyclable, organic, and residual waste for one day.",
+          "category": "waste",
+          "difficulty": "easy",
+          "sdgs": [
+            11,
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "id": "energy_tip",
+      "category": "energy",
+      "sdgs": [
+        7,
+        11,
+        12,
+        13
+      ],
+      "triggers": [
+        "energy saving tip",
+        "save electricity",
+        "reduce energy use",
+        "reduce electricity use"
+      ],
+      "mode": "static",
+      "answer": "Turn off unused lights and devices, avoid leaving chargers plugged in unnecessarily, and use efficient lighting and appliances when available.",
+      "quests": [
+        {
+          "title": "Switch off unused devices",
+          "description": "Check one room and switch off lights or devices that are not being used.",
+          "category": "energy",
+          "difficulty": "easy",
+          "sdgs": [
+            12,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "id": "transport_tip",
+      "category": "transport",
+      "sdgs": [
+        11,
+        12,
+        13
+      ],
+      "triggers": [
+        "sustainable transport tip",
+        "low carbon transport",
+        "reduce transport emissions",
+        "walk or cycle"
+      ],
+      "mode": "static",
+      "answer": "For short trips, walking or cycling can reduce emissions. For longer trips, public transport or sharing rides can reduce the number of vehicles used.",
+      "quests": [
+        {
+          "title": "Choose a lower-carbon trip",
+          "description": "Replace one short vehicle trip with walking, cycling, public transport, or a shared ride.",
+          "category": "transport",
+          "difficulty": "easy",
+          "sdgs": [
+            11,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "id": "greenery_tip",
+      "category": "greenery",
+      "sdgs": [
+        11,
+        13,
+        15
+      ],
+      "triggers": [
+        "greenery tip",
+        "plant trees",
+        "protect green space",
+        "biodiversity tip"
+      ],
+      "mode": "static",
+      "answer": "Protect existing trees and green spaces first. Where planting is appropriate, choose locally suitable species and make sure there is a plan to care for them after planting.",
+      "quests": [
+        {
+          "title": "Care for a local green space",
+          "description": "Spend a short session watering, cleaning, or caring for a tree or nearby green space.",
+          "category": "greenery",
+          "difficulty": "easy",
+          "sdgs": [
+            11,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "id": "community_tip",
+      "category": "community",
+      "sdgs": [
+        3,
+        10,
+        11,
+        12,
+        13
+      ],
+      "triggers": [
+        "community action",
+        "community sustainability",
+        "join cleanup",
+        "help my community"
+      ],
+      "mode": "static",
+      "answer": "Choose a small local action that other people can verify, such as joining a cleanup, reporting a local environmental issue, or helping confirm a community report.",
+      "quests": [
+        {
+          "title": "Take one verified community action",
+          "description": "Join a local cleanup, report an environmental issue, or help verify an existing community report.",
+          "category": "community",
+          "difficulty": "easy",
+          "sdgs": [
+            10,
+            11,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sdg_11",
+      "category": "community",
+      "sdgs": [
+        11
+      ],
+      "triggers": [
+        "what is sdg 11",
+        "sdg 11",
+        "sustainable cities and communities"
+      ],
+      "mode": "static",
+      "answer": "SDG 11 is Sustainable Cities and Communities. It focuses on making human settlements inclusive, safe, resilient, and sustainable.",
+      "quests": []
+    },
+    {
+      "id": "sdg_12",
+      "category": "waste",
+      "sdgs": [
+        12
+      ],
+      "triggers": [
+        "what is sdg 12",
+        "sdg 12",
+        "responsible consumption and production"
+      ],
+      "mode": "static",
+      "answer": "SDG 12 is Responsible Consumption and Production. It focuses on using resources more efficiently, reducing waste, and improving how goods are produced and consumed.",
+      "quests": []
+    },
+    {
+      "id": "sdg_13",
+      "category": "community",
+      "sdgs": [
+        13
+      ],
+      "triggers": [
+        "what is sdg 13",
+        "sdg 13",
+        "climate action"
+      ],
+      "mode": "static",
+      "answer": "SDG 13 is Climate Action. It calls for urgent action to address climate change and strengthen resilience to climate-related impacts.",
+      "quests": []
+    }
+  ],
+  "guided_flows": {
+    "water_personalization": {
+      "category": "water",
+      "sdgs": [
+        6,
+        11,
+        12,
+        13
+      ],
+      "steps": [
+        {
+          "id": "shower_minutes",
+          "question": "About how many minutes is your usual shower or bath?",
+          "type": "number",
+          "store_as": "shower_minutes"
+        },
+        {
+          "id": "known_leaks",
+          "question": "Do you currently know of any leaking taps, pipes, or toilets at home?",
+          "type": "choice",
+          "choices": [
+            "yes",
+            "no",
+            "not sure"
+          ],
+          "store_as": "known_leaks"
+        },
+        {
+          "id": "laundry_habit",
+          "question": "Do you usually run the washing machine only when you have a full load?",
+          "type": "choice",
+          "choices": [
+            "yes",
+            "no",
+            "sometimes",
+            "not applicable"
+          ],
+          "store_as": "full_laundry_load"
+        }
+      ],
+      "recommendation_rules": [
+        {
+          "when": {
+            "field": "shower_minutes",
+            "operator": ">",
+            "value": 10
+          },
+          "recommendation": "Try reducing your shower by a few minutes and track whether the shorter routine still works for you.",
+          "quest": {
+            "title": "Shorten your shower",
+            "description": "Reduce your usual shower time for the next 3 days.",
+            "category": "water",
+            "difficulty": "easy",
+            "sdgs": [
+              6,
+              12,
+              13
+            ]
+          }
+        },
+        {
+          "when": {
+            "field": "known_leaks",
+            "operator": "==",
+            "value": "yes"
+          },
+          "recommendation": "Prioritize checking and fixing the known leak because continuous leaks can waste water over time.",
+          "quest": {
+            "title": "Inspect the known leak",
+            "description": "Check the leaking tap, pipe, or toilet and arrange a repair if needed.",
+            "category": "water",
+            "difficulty": "easy",
+            "sdgs": [
+              6,
+              12
+            ]
+          }
+        },
+        {
+          "when": {
+            "field": "known_leaks",
+            "operator": "==",
+            "value": "not sure"
+          },
+          "recommendation": "Do a quick leak check around taps, toilets, and visible pipes.",
+          "quest": {
+            "title": "Do a household leak check",
+            "description": "Inspect taps, toilets, and visible pipes for signs of leakage.",
+            "category": "water",
+            "difficulty": "easy",
+            "sdgs": [
+              6,
+              12
+            ]
+          }
+        },
+        {
+          "when": {
+            "field": "full_laundry_load",
+            "operator": "in",
+            "value": [
+              "no",
+              "sometimes"
+            ]
+          },
+          "recommendation": "When practical, wait for a fuller laundry load instead of running many small loads.",
+          "quest": {
+            "title": "Run one full laundry load",
+            "description": "Wait until you have a reasonably full load before using the washing machine.",
+            "category": "water",
+            "difficulty": "easy",
+            "sdgs": [
+              6,
+              12
+            ]
+          }
+        }
+      ],
+      "default_recommendation": "Your habits already avoid several common sources of unnecessary household water use. Keep monitoring for leaks and avoid using more water than needed.",
+      "completion_text": "Based on your answers, here is a simple water-saving plan:"
+    }
+  }
+}
