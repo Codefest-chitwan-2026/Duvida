@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -24,9 +24,13 @@ export function TopBar({
   return (
     <View style={[styles.container, { top: insets.top + 8 }]} pointerEvents="box-none">
       <View style={styles.avatarWrap}>
-        <View style={styles.avatarButton} onTouchEnd={onAvatarPress}>
+        <TouchableOpacity
+          style={styles.avatarButton}
+          onPress={onAvatarPress}
+          activeOpacity={0.8}
+        >
           <Ionicons name="person" size={26} color={colors.textOnDark} />
-        </View>
+        </TouchableOpacity>
         <View style={styles.levelBadge}>
           <Text style={styles.levelText}>{avatarLevel}</Text>
         </View>
@@ -37,10 +41,15 @@ export function TopBar({
         <Text style={styles.coinText}>{coinBalance.toLocaleString()}</Text>
       </View>
 
-      <View style={styles.bellButton} onTouchEnd={onNotificationsPress}>
+      <TouchableOpacity
+        style={styles.bellButton}
+        onPress={onNotificationsPress}
+        activeOpacity={0.8}
+        hitSlop={8}
+      >
         <Ionicons name="notifications" size={22} color={colors.textPrimary} />
         {hasUnreadNotifications ? <View style={styles.bellDot} /> : null}
-      </View>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -53,7 +62,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    zIndex: 10,
+    zIndex: 50,
   },
   avatarWrap: {
     width: 52,

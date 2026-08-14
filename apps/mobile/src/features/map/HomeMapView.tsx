@@ -5,7 +5,8 @@ import Mapbox from "@rnmapbox/maps";
 import { IssueMarker } from "@/components/IssueMarker";
 import { PlayerMarker } from "@/components/PlayerMarker";
 import { mockIssues } from "@/features/map/mockIssues";
-import { env } from "@/lib/env";
+import { HomeMapFallback, type HomeMapHandle } from "@/features/map/HomeMapFallback";
+import { env, hasMapboxToken } from "@/lib/env";
 import type { Coordinate } from "@/services/location/useUserLocation";
 
 const CITY_ZOOM_LEVEL = 16.5;
@@ -14,36 +15,74 @@ const TILT_PITCH = 60;
 type HomeMapViewProps = {
   center: Coordinate;
   is3D: boolean;
+  selectedCategory?: string;
+  selectedIssueId?: string | null;
   onIssuePress?: (issueId: string) => void;
 };
 
-export type HomeMapHandle = {
-  recenter: () => void;
-  resetBearing: () => void;
-};
+export type { HomeMapHandle };
 
 /**
- * The live Mapbox surface: renders once a token is configured. Markers use
- * MarkerView (not PointAnnotation) because they need to stay interactive
- * (issue press) and keep animating (the player's pulsing ring) instead of
- * being flattened to a static bitmap.
+ * The live Mapbox surface: renders once a token is configured.
+ * When no token is configured, seamlessly falls back to the interactive Simple Map.
  */
 export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
-  ({ center, is3D, onIssuePress }, ref) => {
+  ({ center, is3D, selectedCategory = "all", selectedIssueId, onIssuePress }, ref) => {
     const cameraRef = useRef<Mapbox.Camera>(null);
+    const fallbackRef = useRef<HomeMapHandle>(null);
 
     useImperativeHandle(ref, () => ({
       recenter: () => {
-        cameraRef.current?.setCamera({
-          centerCoordinate: [center.longitude, center.latitude],
-          zoomLevel: CITY_ZOOM_LEVEL,
-          animationDuration: 500,
-        });
+        if (hasMapboxToken) {
+          cameraRef.current?.setCamera({
+            centerCoordinate: [center.longitude, center.latitude],
+            zoomLevel: CITY_ZOOM_LEVEL,
+            animationDuration: 500,
+          });
+        } else {
+          fallbackRef.current?.recenter();
+        }
       },
       resetBearing: () => {
-        cameraRef.current?.setCamera({ heading: 0, animationDuration: 300 });
+        if (hasMapboxToken) {
+          cameraRef.current?.setCamera({ heading: 0, animationDuration: 300 });
+        } else {
+          fallbackRef.current?.resetBearing();
+        }
+      },
+      zoomIn: () => {
+        if (!hasMapboxToken) {
+          fallbackRef.current?.zoomIn?.();
+        }
+      },
+      zoomOut: () => {
+        if (!hasMapboxToken) {
+          fallbackRef.current?.zoomOut?.();
+        }
       },
     }));
+
+    if (!hasMapboxToken) {
+      return (
+        <HomeMapFallback
+          ref={fallbackRef}
+          center={center}
+          is3D={is3D}
+          selectedCategory={selectedCategory}
+          selectedIssueId={selectedIssueId}
+          onIssuePress={onIssuePress}
+        />
+      );
+    }
+
+    const filteredIssues = mockIssues.filter((issue) => {
+      if (selectedCategory === "all") return true;
+      if (selectedCategory === "quests") return issue.kind === "quest";
+      if (selectedCategory === "hazards")
+        return ["pothole", "traffic", "water-leak"].includes(issue.id);
+      if (selectedCategory === "waste") return issue.id === "garbage" || issue.id === "clean-park";
+      return true;
+    });
 
     return (
       <Mapbox.MapView
@@ -67,7 +106,7 @@ export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
           animationDuration={700}
         />
 
-        {mockIssues.map((issue) => (
+        {filteredIssues.map((issue) => (
           <Mapbox.MarkerView
             key={issue.id}
             id={issue.id}
