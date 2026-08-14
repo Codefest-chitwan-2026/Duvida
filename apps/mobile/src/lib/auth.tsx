@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -26,12 +27,25 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function isRateLimitError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const status =
+    "status" in err ? (err as { status?: unknown }).status : undefined;
+  if (status === 429) return true;
+  const message =
+    "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+  return /rate.?limit|too many requests|too many attempts/i.test(message);
+}
+
 function toErrorMessage(err: unknown): string {
   const message =
     err && typeof err === "object" && "message" in err
       ? String((err as { message?: unknown }).message ?? "")
       : "";
 
+  if (isRateLimitError(err)) {
+    return "Too many signup attempts. Please wait a short moment and try again.";
+  }
   if (/invalid login credentials/i.test(message)) {
     return "Incorrect email or password.";
   }
@@ -111,11 +125,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signUpInFlightRef = useRef(false);
+
   const signUp = useCallback(async (email: string, password: string) => {
+    if (signUpInFlightRef.current) return;
+    signUpInFlightRef.current = true;
     setError(null);
-    const { error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError) {
-      setError(toErrorMessage(signUpError));
+    try {
+      const { error: signUpError } = await supabase.auth.signUp({ email, password });
+      if (signUpError) {
+        setError(toErrorMessage(signUpError));
+      }
+    } finally {
+      signUpInFlightRef.current = false;
     }
   }, []);
 
