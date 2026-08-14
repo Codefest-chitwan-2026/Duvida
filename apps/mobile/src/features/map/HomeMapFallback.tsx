@@ -1,9 +1,8 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+﻿import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
   PanResponder,
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -11,7 +10,7 @@ import {
 
 import { IssueMarker } from "@/components/IssueMarker";
 import { PlayerMarker } from "@/components/PlayerMarker";
-import { mockIssues, DEMO_CENTER, type MapIssue } from "@/features/map/mockIssues";
+import { mockIssues, DEMO_CENTER } from "@/features/map/mockIssues";
 import { colors } from "@/theme/colors";
 import type { Coordinate } from "@/services/location/useUserLocation";
 
@@ -56,8 +55,11 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
     const [dimensions, setDimensions] = useState(() => Dimensions.get("window"));
     const [zoom, setZoom] = useState(15);
     const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-    const panOffsetRef = useRef({ x: 0, y: 0 });
-    panOffsetRef.current = panOffset;
+
+    // Store drag starting position to guarantee exact 1:1 pixel movement without jumps
+    const dragStartPanRef = useRef({ x: 0, y: 0 });
+    const currentPanRef = useRef({ x: 0, y: 0 });
+    currentPanRef.current = panOffset;
 
     useEffect(() => {
       const sub = Dimensions.addEventListener("change", ({ window }) => {
@@ -82,29 +84,42 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
       },
     }));
 
+    // Natural touch & mouse pan gesture with 1:1 displacement & momentum
     const panResponder = useRef(
       PanResponder.create({
         onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, gestureState) => {
+          // Trigger pan only when deliberate movement occurs (> 3 pixels)
           return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
         },
-        onPanResponderGrant: () => {},
+        onPanResponderGrant: () => {
+          // Lock current offset as origin for the drag session
+          dragStartPanRef.current = { ...currentPanRef.current };
+        },
         onPanResponderMove: (_, gestureState) => {
-          setPanOffset({
-            x: panOffsetRef.current.x + gestureState.dx,
-            y: panOffsetRef.current.y + gestureState.dy,
-          });
+          // Smooth 1:1 natural drag tracking
+          const nextX = dragStartPanRef.current.x + gestureState.dx;
+          const nextY = dragStartPanRef.current.y + gestureState.dy;
+          setPanOffset({ x: nextX, y: nextY });
         },
         onPanResponderRelease: (_, gestureState) => {
-          setPanOffset((prev) => ({
-            x: prev.x + gestureState.dx,
-            y: prev.y + gestureState.dy,
-          }));
+          // Calculate subtle momentum glide for fluid Google Maps feel
+          const momentumX = Math.max(Math.min(gestureState.vx * 60, 180), -180);
+          const momentumY = Math.max(Math.min(gestureState.vy * 60, 180), -180);
+
+          const finalX = dragStartPanRef.current.x + gestureState.dx + momentumX;
+          const finalY = dragStartPanRef.current.y + gestureState.dy + momentumY;
+
+          setPanOffset({ x: finalX, y: finalY });
+        },
+        onPanResponderTerminate: () => {
+          // Keep current position if gesture is interrupted
+          setPanOffset({ ...currentPanRef.current });
         },
       })
     ).current;
 
-    // Filter issues
+    // Filter issues by category
     const filteredIssues = mockIssues.filter((issue) => {
       if (selectedCategory === "all") return true;
       if (selectedCategory === "quests") return issue.kind === "quest";
@@ -124,18 +139,26 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
     const screenCenterX = dimensions.width / 2;
     const screenCenterY = dimensions.height / 2;
 
-    // Generate visible tiles in 5x5 grid around center
+    // Wide 7x9 buffer grid to ensure zero black edge flashes during smooth panning
     const tiles: { key: string; x: number; y: number; left: number; top: number; url: string }[] = [];
     const maxTiles = Math.pow(2, zoom);
 
-    for (let dx = -2; dx <= 2; dx++) {
-      for (let dy = -3; dy <= 3; dy++) {
-        const tileX = (centerTileXInt + dx + maxTiles) % maxTiles;
+    // Calculate how many tiles needed based on screen size + pan displacement
+    const panTileShiftX = Math.floor(-panOffset.x / TILE_SIZE);
+    const panTileShiftY = Math.floor(-panOffset.y / TILE_SIZE);
+
+    const minDx = -3 + panTileShiftX;
+    const maxDx = 3 + panTileShiftX;
+    const minDy = -4 + panTileShiftY;
+    const maxDy = 4 + panTileShiftY;
+
+    for (let dx = minDx; dx <= maxDx; dx++) {
+      for (let dy = minDy; dy <= maxDy; dy++) {
+        const tileX = (centerTileXInt + dx + maxTiles * 10) % maxTiles;
         const tileY = centerTileYInt + dy;
 
         if (tileY >= 0 && tileY < maxTiles) {
           const sub = SUBDOMAINS[Math.abs(tileX + tileY) % SUBDOMAINS.length];
-          // CartoDB Dark Matter tile server (free, high quality, dark themed)
           const url = `https://${sub}.basemaps.cartocdn.com/dark_all/${zoom}/${tileX}/${tileY}.png`;
 
           const left = screenCenterX + (dx - fractionalX) * TILE_SIZE + panOffset.x;
@@ -161,7 +184,7 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
             is3D && styles.mapSurface3D,
           ]}
         >
-          {/* Tile Layer */}
+          {/* Active Map Tile Layer */}
           {tiles.map((t) => (
             <Image
               key={t.key}
@@ -299,10 +322,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    zIndex: 5,
+    zIndex: 10,
   },
   attributionText: {
-    color: "rgba(255, 255, 255, 0.5)",
+    color: "rgba(255, 255, 255, 0.6)",
     fontSize: 9,
+    fontFamily: "monospace",
   },
 });
