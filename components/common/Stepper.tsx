@@ -26,7 +26,7 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
             <View style={styles.step}>
               <View style={[styles.circle, isFilled && styles.circleFilled]}>
                 <Text style={[styles.circleText, isFilled && styles.circleTextFilled]}>
-                  {stepNumber}
+                  {isCompleted ? '✓' : stepNumber}
                 </Text>
               </View>
               <Text style={[styles.label, isActive && styles.labelActive]} numberOfLines={1}>
