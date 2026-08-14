@@ -24,101 +24,93 @@ Splash -> check Supabase session
   has session -> MainTabs directly
 ```
 
-Today: **the full navigation shape is wired — splash, welcome/login/register, and the session gate — but the session itself is still a placeholder, not Supabase.** `app/_layout.tsx`'s `RootNavigator` shows `SplashScreen` while `src/lib/auth.tsx`'s `AuthProvider` resolves `isLoading` (currently an immediate async no-op standing in for `supabase.auth.getSession()`), then redirects between `(auth)` and the rest of the app based on `isAuthenticated` — an in-memory `useState(false)` that `signIn()` flips to `true`. Swap the state source in `auth.tsx` for a real Supabase session (`getSession`/`onAuthStateChange`) without touching the navigation structure.
+Today: **the auth gate is wired, but the session behind it is a placeholder, not Supabase.** `app/_layout.tsx` now redirects between `(auth)` and the rest of the app based on `src/lib/auth.tsx`'s `AuthProvider` — an in-memory `useState(false)` that `signIn()` flips to `true`. There is still no `supabase` client file and no real session check; swap the state source in `auth.tsx` for a Supabase session (`getSession`/`onAuthStateChange`) without touching the navigation structure. Welcome/Login UI was ported from `origin/main`'s standalone `mobile/src/features/login/*` scaffold into `apps/mobile/src/features/auth/*`.
 
 | Screen | Target path | Status |
 | --- | --- | --- |
-| Splash / session gate | `app/_layout.tsx` (`RootNavigator`) → [SplashScreen.tsx](../apps/mobile/src/components/SplashScreen.tsx) shown while `isLoading` | 🚧 splash + gate wired; backing state is a placeholder, not a real Supabase session |
-| Welcome | `app/(auth)/welcome.tsx` → [WelcomeScreen.tsx](../apps/mobile/src/features/auth/WelcomeScreen.tsx) | ✅ "Get Started" → Register; "Log In" → Login |
+| Splash / session gate | `app/_layout.tsx` (`RootNavigator`, redirects on `isAuthenticated`) | 🚧 gate works; backing state is a placeholder, not a real Supabase session |
+| Welcome | `app/(auth)/welcome.tsx` → [WelcomeScreen.tsx](../apps/mobile/src/features/auth/WelcomeScreen.tsx) | ✅ "Get Started" signs in directly (no Register step yet); "Log In" goes to Login |
 | Login | `app/(auth)/login.tsx` → [LoginScreen.tsx](../apps/mobile/src/features/auth/LoginScreen.tsx) | ✅ UI + fields wired; "Log In"/"Sign up" both sign in directly (no real Supabase call yet) |
-| Register | `app/(auth)/register.tsx` → [RegisterScreen.tsx](../apps/mobile/src/features/auth/RegisterScreen.tsx) | ✅ UI wired (name/email/password); "Create Account" signs in directly (no real Supabase call yet) |
+| Register | `app/(auth)/register.tsx` | ⬜ not part of the ported scaffold; Welcome's "Get Started" bypasses it for now |
 | Auth group layout | `app/(auth)/_layout.tsx` | ✅ |
 
 ## Bottom tabs
 
-The target 5-tab IA (Map, Quests, Report, Rewards, Profile) with a center Report "+" action is **already the shape of the existing tab bar** — [BottomNavBar.tsx](../apps/mobile/src/components/BottomNavBar.tsx) renders Map/Quests/Rewards/Profile plus a center create button that pushes `/report/new`. The "Wallet" tab label was renamed to "Rewards"; the route path (`/wallet`) is unchanged.
+The target 5-tab IA (Map, Quests, Report, Rewards, Profile) with a center Report "+" action is **already the shape of the existing tab bar** — [BottomNavBar.tsx](../apps/mobile/src/components/BottomNavBar.tsx) already renders Map/Quests/Wallet/Profile plus a center create button that pushes `/report/new`. Naming below tracks that reality rather than introducing a second tab bar.
 
 | Target tab | Existing file | Status |
 | --- | --- | --- |
-| Map | `app/(tabs)/index.tsx` | ✅ live Mapbox map mounted (was a paused placeholder) |
-| Quests | `app/(tabs)/quests/index.tsx` | ✅ list UI with Community/Personal + Active/Completed/Expired filters, AI Advisor entry button |
-| Report (center "+") | `app/report/new.tsx` → `app/report-issue/*`, opened as a modal outside the tab bar | ✅ full wizard: category → details → media → review → duplicate-check → success/existing-issue |
-| Rewards | `app/(tabs)/wallet/index.tsx` (tab labeled "Rewards") | ✅ points/XP/level/badges/leaderboard; "View Wallet" drills into `wallet/history.tsx` |
-| Profile | `app/(tabs)/profile/index.tsx` | ✅ avatar/level/XP/stats/badges, menu to Edit/Impact/Settings, logout |
+| Map | `app/(tabs)/index.tsx` | ✅ (fallback shown on web, see below) |
+| Quests | `app/(tabs)/quests.tsx` | 🚧 list UI TBD, currently placeholder-level |
+| Report (center "+") | `app/report/new.tsx`, opened as a modal outside the tab bar, matching the spec's "center action" request | 🚧 collects fields; multi-step review flow not built |
+| Rewards | `app/(tabs)/wallet.tsx` | 🚧 exists as "Wallet"; rename/relabel to "Rewards" or keep Wallet as the nested drill-in (see Rewards flow below) |
+| Profile | `app/(tabs)/profile.tsx` | 🚧 placeholder-level |
 
 ## 1. Map flow
 
 | Screen | Target path | Status |
 | --- | --- | --- |
-| MapScreen | `app/(tabs)/index.tsx` → [HomeMapView.tsx](../apps/mobile/src/features/map/HomeMapView.tsx) | ✅ Mapbox 3D map, GPS location (`useUserLocation`), avatar (`PlayerMarker`), issue + quest markers, `MapControls` (locate/compass/3D toggle) all mounted |
+| MapScreen | `app/(tabs)/index.tsx` → [HomeMapView.tsx](../apps/mobile/src/features/map/HomeMapView.tsx) | ✅ Mapbox 3D map, GPS location, avatar (`PlayerMarker`), issue markers, recenter control all exist. Camera-follow-user and quest markers (currently only issue markers via `mockIssues.ts`) are 🚧. |
 | Web fallback | [HomeMapView.web.tsx](../apps/mobile/src/features/map/HomeMapView.web.tsx) | ✅ `@rnmapbox/maps` has no web target; web renders `HomeMapFallback` instead. |
-| IssueDetailScreen | `app/issue/[id].tsx` → [IssueDetailScreen.tsx](../apps/mobile/src/features/map/IssueDetailScreen.tsx) | ✅ tapping an issue marker routes here (was routing to `/report/new?issueId=...`) |
-| QuestDetailScreen (from map marker) | `app/(tabs)/quests/[id].tsx` (shared, see Quest flow) | ✅ tapping a quest marker (`kind: "quest"` in `mockIssues.ts`) routes here |
-
-Camera continuously following the user's live position (vs. flying to it once on load/recenter) is still 🚧 — `MapControls`' locate button calls `HomeMapView`'s `recenter()`, but there's no persistent follow mode yet.
+| IssueDetailScreen | `app/issue/[id].tsx` | ⬜ tap handler exists (`onIssuePress` in `index.tsx`) but currently routes to `/report/new?issueId=...` instead of a detail screen |
+| QuestDetailScreen (from map marker) | `app/(tabs)/quests/[id].tsx` (shared, see Quest flow) | ⬜ no quest markers on the map yet |
 
 ## 2. Report issue flow
 
 | Screen | Target path | Status |
 | --- | --- | --- |
-| ReportIssueScreen | `app/report/new.tsx` → `app/report-issue/{category,details,media}.tsx` | ✅ multi-step wizard (category, details, media) — ported from the standalone root app via re-export shims, unchanged |
-| ReviewReportScreen | `app/report-issue/review.tsx` | ✅ submit now continues into duplicate-check instead of a mock `Alert` |
-| DuplicateCheckScreen | `app/report-issue/duplicate-check.tsx` | ✅ mock category+GPS-proximity check against a canned "existing issue" (stands in for a real similarity backend) |
-| ExistingIssueScreen | `app/report-issue/existing-issue.tsx` | ✅ shows the matching mock issue; "Confirm & Support" or "Submit as New" |
-| ReportSuccessScreen | `app/report-issue/success.tsx` | ✅ shows report ID, "Back to Map" returns to `/` |
+| ReportIssueScreen | `app/report/new.tsx` | 🚧 collects category, photo, GPS, description, severity per the spec's field list — but currently a single screen, not step 1 of a wizard |
+| ReviewReportScreen | `app/report/review.tsx` | ⬜ |
+| DuplicateCheckScreen | `app/report/duplicate-check.tsx` | ⬜ |
+| ExistingIssueScreen | `app/report/existing-issue.tsx` | ⬜ |
+| ReportSuccessScreen | `app/report/success.tsx` | ⬜ |
 
-Flow: `report/new` → `category` → `details` → `media` → `review` → `duplicate-check` → either `success` (no duplicate) or `existing-issue` (possible duplicate → confirm/support existing, or continue as new → `success`) → back to Map. These 5 new screens live in the root standalone app's `app/report-issue/` folder (same place as the ported wizard) with one-line re-export shims into `apps/mobile/app/report-issue/`, keeping the pattern already established for `category`/`details`/`media`/`review`.
-
-Duplicate detection and the map-marker refresh after submission are mocked client-side only — no Supabase insert or real GPS/text/image-similarity backend yet (out of scope for this pass; see `docs/architecture.md`/`roadmap.md`).
+Flow once built: `report/new` → `review` → `duplicate-check` → either `success` (no duplicate, insert into Supabase) or `existing-issue` (possible duplicate → confirm/support existing, or continue as new) → back to Map.
 
 ## 3. Quest flow
 
 | Screen | Target path | Status |
 | --- | --- | --- |
-| QuestListScreen | `app/(tabs)/quests/index.tsx` + [mockQuests.ts](../apps/mobile/src/features/quests/mockQuests.ts) | ✅ Community/Personal category filter + Active/Completed/Expired status filter; AI Advisor entry button |
-| QuestDetailScreen | `app/(tabs)/quests/[id].tsx` → [QuestDetailScreen.tsx](../apps/mobile/src/features/quests/QuestDetailScreen.tsx) | ✅ image, title, description, tokens/XP, steps, safety note, Start Quest |
-| ActiveQuestScreen | `app/(tabs)/quests/[id]/active.tsx` → [ActiveQuestScreen.tsx](../apps/mobile/src/features/quests/ActiveQuestScreen.tsx) | ✅ step checklist, "I'm Done — Submit Proof" |
-| SubmitProofScreen | `app/quests/[id]/submit-proof.tsx` → [SubmitProofScreen.tsx](../apps/mobile/src/features/quests/SubmitProofScreen.tsx) | ✅ before/after photo slots, GPS, notes; submit now routes to Verification (was a mock `Alert`) |
-| VerificationScreen | `app/quests/[id]/verification.tsx` | ✅ mock verification (deterministic per quest id, stands in for GPS/image-similarity + manual review) routes to Completed or VerificationStatus |
-| VerificationStatusScreen (pending/rejected) | `app/quests/[id]/verification-status.tsx` | ✅ pending → "Back to Quests"; rejected → reason + "Retry Submission" |
-| QuestCompletedScreen | `app/quests/[id]/completed.tsx` | ✅ "Claim Reward" |
-| RewardEarnedScreen | `app/quests/[id]/reward.tsx` | ✅ shows tokens/XP earned, "Back to Quests" |
+| QuestListScreen | `app/(tabs)/quests.tsx` + [mockQuests.ts](../apps/mobile/src/features/quests/mockQuests.ts) | 🚧 mock data exists; Community vs. Personal split and Active/Completed/Expired status filters not built |
+| QuestDetailScreen | `app/(tabs)/quests/[id].tsx` | ⬜ |
+| ActiveQuestScreen | `app/(tabs)/quests/[id]/active.tsx` | ⬜ |
+| SubmitProofScreen | `app/quests/[id]/submit-proof.tsx` → [SubmitProofScreen.tsx](../apps/mobile/src/features/quests/SubmitProofScreen.tsx) | ✅ before/after photo slots ([PhotoUploadSlot.tsx](../apps/mobile/src/components/PhotoUploadSlot.tsx)), GPS, notes, submit button all exist |
+| VerificationScreen | `app/quests/[id]/verification.tsx` | ⬜ |
+| VerificationStatusScreen (pending/rejected) | `app/quests/[id]/verification-status.tsx` | ⬜ |
+| QuestCompletedScreen | `app/quests/[id]/completed.tsx` | ⬜ |
+| RewardEarnedScreen | `app/quests/[id]/reward.tsx` | ⬜ |
 
-Reminder from the spec, worth keeping visible here: verification/escalation quests, not DIY-repair quests, for anything involving electrical systems or road infrastructure — reflected in `mockQuests.ts`'s `safetyNote` field.
-
-Verification outcomes are mocked (no real GPS-consistency/image-similarity/manual-review backend yet), and reward claims don't yet write back to a live points/XP store — `RewardsScreen`/`WalletScreen` show static mock data, not a store updated by completed quests.
+Reminder from the spec, worth keeping visible here: verification/escalation quests, not DIY-repair quests, for anything involving electrical systems or road infrastructure.
 
 ## 4. AI Sustainability Advisor
 
-Not a bottom tab — entry points are the Quests list header ("AI Advisor" button) and `QuestDetailScreen`/`RecommendedQuestsScreen` share the same detail route.
+Not a bottom tab — entry points are QuestListScreen and/or an assistant button.
 
 | Screen | Target path | Status |
 | --- | --- | --- |
-| AIAdvisorIntroScreen | `app/(tabs)/quests/advisor/index.tsx` | ✅ topic overview, "Start Chat" |
-| AIChatScreen | `app/(tabs)/quests/advisor/chat.tsx` → [AIChatScreen.tsx](../apps/mobile/src/features/quests/AIChatScreen.tsx) | ✅ asks 4 fixed questions (transport, travel distance, electricity, waste) via quick-reply chips, stays scoped to sustainability topics |
-| RecommendedQuestsScreen | `app/(tabs)/quests/advisor/recommended.tsx` | ✅ lists `aiSuggested` quests from `mockQuests.ts`; selecting one routes to the shared `quests/[id]` detail screen |
-
-The chat doesn't call a real LLM yet — answers only drive which canned `aiSuggested` quests are shown (all of them, currently), not a live-generated recommendation. A real Gemini-backed chat exists on a separate `Sustainability-Advisor` branch and isn't wired in here (out of scope for this navigation pass).
+| AIAdvisorIntroScreen | `app/(tabs)/quests/advisor/index.tsx` | ⬜ |
+| AIChatScreen | `app/(tabs)/quests/advisor/chat.tsx` | ⬜ (asks ~3-4 questions: transport/vehicle use, daily travel distance, electricity/energy use, water habits, waste/recycling habits — stays scoped to sustainability/carbon topics) |
+| RecommendedQuestsScreen | `app/(tabs)/quests/advisor/recommended.tsx` | ⬜ selecting a card routes to the same shared `quests/[id]` detail screen |
 
 ## 5. Rewards flow
 
 | Screen | Target path | Status |
 | --- | --- | --- |
-| RewardsScreen | `app/(tabs)/wallet/index.tsx` → [RewardsScreen.tsx](../apps/mobile/src/features/rewards/RewardsScreen.tsx) | ✅ points/XP/level, badges, leaderboard, link into Wallet |
-| WalletScreen | `app/(tabs)/wallet/history.tsx` → [WalletScreen.tsx](../apps/mobile/src/features/rewards/WalletScreen.tsx) | ✅ balance + recent transactions |
+| RewardsScreen | `app/(tabs)/wallet.tsx` (rename/relabel candidate) or new `app/(tabs)/rewards.tsx` | 🚧 total points/XP/badges/achievements/leaderboard not yet broken out |
+| WalletScreen | `app/(tabs)/wallet/history.tsx` (if `wallet.tsx` becomes the Rewards landing screen) | 🚧 current `wallet.tsx` covers today's balance display; transaction history view is ⬜ |
 
-Points/tokens are in-app XP-style rewards for this build, not crypto or guaranteed real money — keep that framing in any UI copy. Data is mock (`mockRewards.ts`), not yet backed by Supabase or updated live from completed quests/reports.
+Points/tokens are in-app XP-style rewards for this build, not crypto or guaranteed real money — keep that framing in any UI copy.
 
 ## 6. Profile flow
 
 | Screen | Target path | Status |
 | --- | --- | --- |
-| ProfileScreen | `app/(tabs)/profile/index.tsx` → [ProfileScreen.tsx](../apps/mobile/src/features/profile/ProfileScreen.tsx) | ✅ avatar/level/XP, reports/verified/quests stats, badges, menu, logout |
-| EditProfileScreen | `app/(tabs)/profile/edit.tsx` | ✅ name/bio form (local state only, no persistence) |
-| ImpactScreen | `app/(tabs)/profile/impact.tsx` | ✅ mock CO₂/waste/water impact estimates |
-| SettingsScreen | `app/(tabs)/profile/settings.tsx` | ✅ notification/location toggles (local state only), logout |
+| ProfileScreen | `app/(tabs)/profile.tsx` | 🚧 placeholder-level; avatar/level/XP/badges/reports-submitted/issues-verified/quests-completed/impact/settings/logout not all present |
+| EditProfileScreen | `app/(tabs)/profile/edit.tsx` | ⬜ |
+| ImpactScreen | `app/(tabs)/profile/impact.tsx` | ⬜ |
+| SettingsScreen | `app/(tabs)/profile/settings.tsx` | ⬜ |
 
-Logout (`useAuth().signOut()`) clears the placeholder session and the root gate redirects to `(auth)/welcome` — same Supabase-wiring gap noted at the top of this doc.
+Logout clears the Supabase session and returns to `(auth)/welcome` — blocked on the same auth-wiring gap noted at the top of this doc.
 
 ## Mobile vs. web
 

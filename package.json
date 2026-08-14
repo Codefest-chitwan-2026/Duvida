@@ -1,13 +1,9 @@
 {
-  "name": "report-issue-app",
-  "version": "1.0.0",
-  "main": "App.tsx",
+  "name": "team-everest-digital-twin",
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "start": "corepack pnpm --filter mobile start",
-    "android": "corepack pnpm --filter mobile android",
-    "ios": "corepack pnpm --filter mobile ios",
     "web": "corepack pnpm --filter mobile exec expo start --web",
     "dev": "pnpm --parallel --filter admin --filter mobile dev",
     "dev:admin": "pnpm --filter admin dev",
@@ -15,27 +11,5 @@
     "build": "pnpm --recursive build",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck"
-  },
-  "dependencies": {
-    "@expo/metro-runtime": "~57.0.9",
-    "expo": "~57.0.12",
-    "expo-clipboard": "~57.0.1",
-    "expo-constants": "~57.0.10",
-    "expo-image-picker": "~57.0.9",
-    "expo-linking": "~57.0.5",
-    "expo-router": "~57.0.12",
-    "expo-status-bar": "~57.0.1",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-native": "0.86.2",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0",
-    "react-native-web": "^0.21.2"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.24.0",
-    "@types/react": "~19.2.2",
-    "babel-preset-expo": "~57.0.0",
-    "typescript": "~6.0.3"
   }
 }
