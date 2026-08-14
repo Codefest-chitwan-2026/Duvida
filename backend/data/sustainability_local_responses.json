@@ -242,6 +242,21 @@
       "mode": "static",
       "answer": "SDG 13 is Climate Action. It calls for urgent action to address climate change and strengthen resilience to climate-related impacts.",
       "quests": []
+    },
+    {
+      "id": "sdg_advice_menu",
+      "category": "community",
+      "sdgs": [
+        11,
+        12,
+        13
+      ],
+      "triggers": [
+        "i need sdg advice"
+      ],
+      "mode": "static",
+      "answer": "Sure! 🌱 What would you like advice on?",
+      "quests": []
     }
   ],
   "guided_flows": {

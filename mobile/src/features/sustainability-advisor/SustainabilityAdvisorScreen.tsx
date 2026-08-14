@@ -122,8 +122,21 @@ function QuickReplyChip({ icon, label, onPress }: QuickReply & { onPress?: () =>
 type ActionButtonConfig = { label: string; message: string };
 
 const actionButtons: ActionButtonConfig[] = [
-  { label: '🌱 Ask SDG Advice', message: 'Give me simple sustainability advice' },
+  { label: '🌱 Ask SDG Advice', message: 'I need SDG Advice' },
   { label: '🏘️ Community Quests', message: 'Show me community sustainability quests' },
+];
+
+// Must match backend/data/sustainability_local_responses.json's "sdg_advice_menu"
+// answer exactly — the UI uses it to decide when to show the category buttons.
+const SDG_ADVICE_MENU_PROMPT = 'Sure! 🌱 What would you like advice on?';
+
+const sdgAdviceCategories: ActionButtonConfig[] = [
+  { label: '💧 Water', message: 'Give me a water saving tip' },
+  { label: '♻️ Waste', message: 'Tell me how to reduce waste' },
+  { label: '🌱 Greenery', message: 'Give me a greenery tip' },
+  { label: '⚡ Energy', message: 'Give me an energy saving tip' },
+  { label: '🚶 Transport', message: 'Give me a sustainable transport tip' },
+  { label: '🏘️ Community', message: 'Tell me about community action I can take' },
 ];
 
 function BigActionButton({ label, onPress }: { label: string; onPress: () => void }) {
@@ -218,6 +231,12 @@ export default function SustainabilityAdvisorScreen({
 
   const canUseChatInput = hasSelectedMode && !isSending;
 
+  const lastMessage = messages[messages.length - 1];
+  const showSdgAdviceCategories =
+    lastMessage?.sender === 'bot' &&
+    lastMessage.body.kind === 'text' &&
+    lastMessage.body.text === SDG_ADVICE_MENU_PROMPT;
+
   const handleActionButtonPress = (message: string) => {
     setHasSelectedMode(true);
     sendMessage(message);
@@ -305,6 +324,20 @@ export default function SustainabilityAdvisorScreen({
               ) : (
                 <BotMessage key={message.id} time={message.time} body={message.body} />
               )
+            )}
+
+            {showSdgAdviceCategories && (
+              <View style={styles.chipRow}>
+                {sdgAdviceCategories.map((category) => (
+                  <TouchableOpacity
+                    key={category.label}
+                    style={styles.chip}
+                    onPress={() => sendMessage(category.message)}
+                  >
+                    <Text style={styles.chipText}>{category.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             )}
 
             <View style={styles.chipRow}>

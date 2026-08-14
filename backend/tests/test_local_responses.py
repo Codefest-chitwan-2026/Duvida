@@ -24,6 +24,7 @@ STATIC_QUERIES = [
     "What is SDG 11?",
     "What is SDG 12?",
     "What is SDG 13?",
+    "I need SDG Advice",
 ]
 
 # water_tip is mode == "guided" in the data (tied to the water_personalization
@@ -53,8 +54,18 @@ def test_data_file_has_expected_intent_modes():
         "sdg_11",
         "sdg_12",
         "sdg_13",
+        "sdg_advice_menu",
     ]:
         assert modes[intent_id] == "static"
+
+
+def test_sdg_advice_menu_returns_expected_prompt():
+    # The mobile UI matches on this exact string to decide when to show the
+    # category buttons, so the wording is a real contract, not just content.
+    reply = match_local_response("I need SDG Advice")
+    assert reply is not None
+    assert reply["answer"] == "Sure! 🌱 What would you like advice on?"
+    assert reply["quests"] == []
 
 
 @pytest.mark.parametrize("message", STATIC_QUERIES)
