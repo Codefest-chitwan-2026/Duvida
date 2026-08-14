@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+﻿import React, { useRef, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -33,7 +33,7 @@ export default function HomeScreen() {
   const mapRef = useRef<HomeMapHandle>(null);
 
   const { coordinate } = useUserLocation();
-  const [is3D, setIs3D] = useState(false);
+  const [is3D, setIs3D] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
 
@@ -104,7 +104,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Main Interactive Map Surface */}
+      {/* Main Interactive 3D Map Surface */}
       <HomeMapView
         ref={mapRef}
         center={coordinate}
@@ -192,11 +192,11 @@ export default function HomeScreen() {
       <View style={[styles.telemetryBadge, { bottom: insets.bottom + 90 }]} pointerEvents="none">
         <View style={styles.telemetryDot} />
         <Text style={styles.telemetryText}>
-          GPS Live • {coordinate.latitude.toFixed(4)}° N, {coordinate.longitude.toFixed(4)}° E
+          GPS 3D Live • {coordinate.latitude.toFixed(4)}° N, {coordinate.longitude.toFixed(4)}° E
         </Text>
       </View>
 
-      {/* Floating Map Controls (Compass, Recenter, 3D, Zoom) */}
+      {/* Floating Map Controls (Compass, Recenter, 3D Toggle, Zoom) */}
       <MapControls
         bottomOffset={insets.bottom + (selectedIssue ? 230 : 90)}
         is3D={is3D}

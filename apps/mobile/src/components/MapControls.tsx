@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+﻿import React, { type ReactNode } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { colors } from "@/theme/colors";
@@ -25,22 +25,37 @@ export function MapControls({
 }: MapControlsProps) {
   return (
     <View style={[styles.container, { bottom: bottomOffset }]} pointerEvents="box-none">
-      <ControlButton onPress={onCompassPress}>
+      {/* Compass / Orientation */}
+      <ControlButton onPress={onCompassPress} label="Reset Orientation">
         <Ionicons name="navigate" size={20} color={colors.textPrimary} />
       </ControlButton>
-      <ControlButton onPress={onLocatePress}>
+
+      {/* GPS Locate / Recenter */}
+      <ControlButton onPress={onLocatePress} label="Locate Me">
         <MaterialCommunityIcons name="crosshairs-gps" size={22} color={colors.textPrimary} />
       </ControlButton>
-      <ControlButton onPress={onToggle3D} active={is3D}>
-        <Text style={[styles.label3D, is3D && styles.label3DActive]}>3D</Text>
+
+      {/* 3D / 2D Perspective Toggle Button */}
+      <ControlButton
+        onPress={onToggle3D}
+        active={is3D}
+        label={is3D ? "Switch to 2D Map" : "Switch to 3D Map"}
+      >
+        <Text style={[styles.label3D, is3D && styles.label3DActive]}>
+          {is3D ? "3D" : "2D"}
+        </Text>
       </ControlButton>
+
+      {/* Zoom In */}
       {onZoomIn && (
-        <ControlButton onPress={onZoomIn}>
+        <ControlButton onPress={onZoomIn} label="Zoom In">
           <Ionicons name="add" size={22} color={colors.textPrimary} />
         </ControlButton>
       )}
+
+      {/* Zoom Out */}
       {onZoomOut && (
-        <ControlButton onPress={onZoomOut}>
+        <ControlButton onPress={onZoomOut} label="Zoom Out">
           <Ionicons name="remove" size={22} color={colors.textPrimary} />
         </ControlButton>
       )}
@@ -52,18 +67,23 @@ function ControlButton({
   children,
   onPress,
   active,
+  label,
 }: {
   children: ReactNode;
   onPress?: () => void;
   active?: boolean;
+  label?: string;
 }) {
   return (
-    <View
+    <TouchableOpacity
       style={[styles.button, active && styles.buttonActive]}
-      onTouchEnd={onPress}
+      onPress={onPress}
+      activeOpacity={0.75}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityLabel={label}
     >
       {children}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -73,6 +93,7 @@ const styles = StyleSheet.create({
     right: 16,
     gap: 12,
     alignItems: "center",
+    zIndex: 50,
   },
   button: {
     width: 44,
@@ -82,16 +103,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
   },
   buttonActive: {
     backgroundColor: colors.brandGreen,
+    borderColor: colors.brandGreenDark,
   },
   label3D: {
-    fontWeight: "800",
+    fontWeight: "900",
     fontSize: 13,
     color: colors.textPrimary,
   },

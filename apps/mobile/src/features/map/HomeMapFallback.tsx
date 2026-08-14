@@ -45,7 +45,7 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
   (
     {
       center = DEMO_CENTER,
-      is3D = false,
+      is3D = true,
       selectedCategory = "all",
       selectedIssueId,
       onIssuePress,
@@ -89,31 +89,29 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
       PanResponder.create({
         onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, gestureState) => {
-          // Trigger pan only when deliberate movement occurs (> 3 pixels)
           return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
         },
         onPanResponderGrant: () => {
-          // Lock current offset as origin for the drag session
           dragStartPanRef.current = { ...currentPanRef.current };
         },
         onPanResponderMove: (_, gestureState) => {
-          // Smooth 1:1 natural drag tracking
+          // In 3D perspective, scale Y motion slightly so vertical panning feels perfectly 1:1 on the tilted ground plane
+          const yMultiplier = is3D ? 1.3 : 1.0;
           const nextX = dragStartPanRef.current.x + gestureState.dx;
-          const nextY = dragStartPanRef.current.y + gestureState.dy;
+          const nextY = dragStartPanRef.current.y + gestureState.dy * yMultiplier;
           setPanOffset({ x: nextX, y: nextY });
         },
         onPanResponderRelease: (_, gestureState) => {
-          // Calculate subtle momentum glide for fluid Google Maps feel
+          const yMultiplier = is3D ? 1.3 : 1.0;
           const momentumX = Math.max(Math.min(gestureState.vx * 60, 180), -180);
-          const momentumY = Math.max(Math.min(gestureState.vy * 60, 180), -180);
+          const momentumY = Math.max(Math.min(gestureState.vy * 60 * yMultiplier, 180), -180);
 
           const finalX = dragStartPanRef.current.x + gestureState.dx + momentumX;
-          const finalY = dragStartPanRef.current.y + gestureState.dy + momentumY;
+          const finalY = dragStartPanRef.current.y + gestureState.dy * yMultiplier + momentumY;
 
           setPanOffset({ x: finalX, y: finalY });
         },
         onPanResponderTerminate: () => {
-          // Keep current position if gesture is interrupted
           setPanOffset({ ...currentPanRef.current });
         },
       })
@@ -139,18 +137,17 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
     const screenCenterX = dimensions.width / 2;
     const screenCenterY = dimensions.height / 2;
 
-    // Wide 7x9 buffer grid to ensure zero black edge flashes during smooth panning
+    // Wide 7x11 buffer grid to ensure zero black edge flashes during 3D camera tilt
     const tiles: { key: string; x: number; y: number; left: number; top: number; url: string }[] = [];
     const maxTiles = Math.pow(2, zoom);
 
-    // Calculate how many tiles needed based on screen size + pan displacement
     const panTileShiftX = Math.floor(-panOffset.x / TILE_SIZE);
     const panTileShiftY = Math.floor(-panOffset.y / TILE_SIZE);
 
     const minDx = -3 + panTileShiftX;
     const maxDx = 3 + panTileShiftX;
-    const minDy = -4 + panTileShiftY;
-    const maxDy = 4 + panTileShiftY;
+    const minDy = -5 + panTileShiftY;
+    const maxDy = 5 + panTileShiftY;
 
     for (let dx = minDx; dx <= maxDx; dx++) {
       for (let dy = minDy; dy <= maxDy; dy++) {
@@ -178,10 +175,11 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
 
     return (
       <View style={styles.container} {...panResponder.panHandlers}>
+        {/* 3D Perspective Ground Plane Surface */}
         <View
           style={[
             styles.mapSurface,
-            is3D && styles.mapSurface3D,
+            is3D ? styles.mapSurface3D : styles.mapSurface2D,
           ]}
         >
           {/* Active Map Tile Layer */}
@@ -202,7 +200,10 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
             />
           ))}
 
-          {/* Issue & Quest Markers */}
+          {/* 3D Ground Grid Lines Overlay for Cyberpunk/Digital-Twin aesthetic */}
+          {is3D && <View style={styles.gridOverlay} pointerEvents="none" />}
+
+          {/* Issue & Quest Markers (Billboarded upright in 3D space) */}
           {filteredIssues.map((issue) => {
             const issueLat = center.latitude + issue.offset.lat;
             const issueLng = center.longitude + issue.offset.lng;
@@ -224,6 +225,7 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
                 key={issue.id}
                 style={[
                   styles.markerSlot,
+                  is3D && styles.markerBillboard3D,
                   {
                     left: markerLeft,
                     top: markerTop,
@@ -231,6 +233,9 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
                   },
                 ]}
               >
+                {/* 3D Ground Shadow under pin */}
+                <View style={styles.groundShadow} />
+
                 {isSelected && (
                   <View
                     style={[
@@ -247,24 +252,29 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
             );
           })}
 
-          {/* Player Avatar at Screen Center (moves with pan) */}
+          {/* Player Avatar at Screen Center (Billboarded upright in 3D) */}
           <View
             style={[
               styles.playerMarker,
+              is3D && styles.markerBillboard3D,
               {
                 left: screenCenterX + panOffset.x,
                 top: screenCenterY + panOffset.y,
               },
             ]}
           >
+            <View style={styles.playerShadow} />
             <PlayerMarker />
           </View>
         </View>
 
+        {/* 3D Horizon Atmospheric Fog (Top Edge Vignette) */}
+        {is3D && <View style={styles.horizonFog} pointerEvents="none" />}
+
         {/* Map Attribution Watermark */}
         <View style={styles.attribution} pointerEvents="none">
           <Text style={styles.attributionText}>
-            © OpenStreetMap contributors, © CARTO
+            © OpenStreetMap contributors, © CARTO • 3D Camera Active
           </Text>
         </View>
       </View>
@@ -277,26 +287,63 @@ HomeMapFallback.displayName = "HomeMapFallback";
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: colors.background,
+    backgroundColor: "#060A12",
     overflow: "hidden",
   },
   mapSurface: {
     ...StyleSheet.absoluteFill,
   },
+  mapSurface2D: {
+    transform: [{ scale: 1.0 }],
+  },
+  // True 3D Isometric / Low-Angle Perspective Camera
   mapSurface3D: {
     transform: [
-      { perspective: 900 },
-      { rotateX: "36deg" },
-      { scale: 1.1 },
+      { perspective: 750 },
+      { rotateX: "48deg" },
+      { translateY: -20 },
+      { scale: 1.3 },
     ],
   },
   tile: {
     position: "absolute",
-    backgroundColor: "#0B1220",
+    backgroundColor: "#080E1A",
+  },
+  gridOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "transparent",
+    opacity: 0.15,
   },
   markerSlot: {
     position: "absolute",
     transform: [{ translateX: -50 }, { translateY: -50 }],
+  },
+  // Billboarding: Counter-rotates markers so they stand straight UP perpendicular to 3D ground plane
+  markerBillboard3D: {
+    transform: [
+      { translateX: -50 },
+      { translateY: -50 },
+      { rotateX: "-48deg" },
+    ],
+  },
+  groundShadow: {
+    position: "absolute",
+    bottom: 24,
+    left: 36,
+    width: 28,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+    transform: [{ scaleX: 1.3 }],
+  },
+  playerShadow: {
+    position: "absolute",
+    bottom: 12,
+    left: 20,
+    width: 24,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   selectedRing: {
     position: "absolute",
@@ -314,18 +361,27 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -32 }, { translateY: -32 }],
     zIndex: 35,
   },
+  horizonFog: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    backgroundColor: "rgba(6, 10, 18, 0.82)",
+    zIndex: 5,
+  },
   attribution: {
     position: "absolute",
     bottom: 74,
     right: 12,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
     borderRadius: 4,
     zIndex: 10,
   },
   attributionText: {
-    color: "rgba(255, 255, 255, 0.6)",
+    color: "rgba(255, 255, 255, 0.65)",
     fontSize: 9,
     fontFamily: "monospace",
   },
