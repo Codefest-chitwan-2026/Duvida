@@ -119,6 +119,21 @@ function QuickReplyChip({ icon, label, onPress }: QuickReply & { onPress?: () =>
   );
 }
 
+type ActionButtonConfig = { label: string; message: string };
+
+const actionButtons: ActionButtonConfig[] = [
+  { label: '🌱 Ask SDG Advice', message: 'Give me simple sustainability advice' },
+  { label: '🏘️ Community Quests', message: 'Show me community sustainability quests' },
+];
+
+function BigActionButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.bigButton} onPress={onPress}>
+      <Text style={styles.bigButtonText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 function UserBubble({ time, text }: { time: string; text: string }) {
   return (
     <View style={styles.userRow}>
@@ -199,6 +214,14 @@ export default function SustainabilityAdvisorScreen({
   const [activeTab, setActiveTab] = useState<TabKey>('report');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSelectedMode, setHasSelectedMode] = useState(false);
+
+  const canUseChatInput = hasSelectedMode && !isSending;
+
+  const handleActionButtonPress = (message: string) => {
+    setHasSelectedMode(true);
+    sendMessage(message);
+  };
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
@@ -256,57 +279,80 @@ export default function SustainabilityAdvisorScreen({
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.introCard}>
-          <BotAvatar size={56} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.introTitle}>
+        {hasSelectedMode ? (
+          <>
+            <View style={styles.introCard}>
+              <BotAvatar size={56} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.introTitle}>
+                  Hi, I'm <Text style={styles.introTitleAccent}>EcoBot!</Text> 🌱
+                </Text>
+                <Text style={styles.introBody}>
+                  I'm your AI sustainability advisor. Ask me anything about eco-friendly living,
+                  community impact, or how to earn more tokens!
+                </Text>
+              </View>
+            </View>
+            <View style={styles.chipRow}>
+              {introChips.map((chip) => (
+                <QuickReplyChip key={chip.label} {...chip} onPress={() => sendMessage(chip.label)} />
+              ))}
+            </View>
+
+            {messages.map((message) =>
+              message.sender === 'user' ? (
+                <UserBubble key={message.id} time={message.time} text={message.text} />
+              ) : (
+                <BotMessage key={message.id} time={message.time} body={message.body} />
+              )
+            )}
+
+            <View style={styles.chipRow}>
+              {followUpChips.map((chip) => (
+                <QuickReplyChip key={chip.label} {...chip} onPress={() => sendMessage(chip.label)} />
+              ))}
+            </View>
+          </>
+        ) : (
+          <View style={styles.chooseModeContainer}>
+            <BotAvatar size={72} />
+            <Text style={styles.chooseModeTitle}>
               Hi, I'm <Text style={styles.introTitleAccent}>EcoBot!</Text> 🌱
             </Text>
-            <Text style={styles.introBody}>
-              I'm your AI sustainability advisor. Ask me anything about eco-friendly living,
-              community impact, or how to earn more tokens!
-            </Text>
+            <Text style={styles.chooseModeSubtitle}>Choose how you'd like to start:</Text>
+            <View style={styles.bigButtonGroup}>
+              {actionButtons.map((button) => (
+                <BigActionButton
+                  key={button.label}
+                  label={button.label}
+                  onPress={() => handleActionButtonPress(button.message)}
+                />
+              ))}
+            </View>
           </View>
-        </View>
-        <View style={styles.chipRow}>
-          {introChips.map((chip) => (
-            <QuickReplyChip key={chip.label} {...chip} onPress={() => sendMessage(chip.label)} />
-          ))}
-        </View>
-
-        {messages.map((message) =>
-          message.sender === 'user' ? (
-            <UserBubble key={message.id} time={message.time} text={message.text} />
-          ) : (
-            <BotMessage key={message.id} time={message.time} body={message.body} />
-          )
         )}
-
-        <View style={styles.chipRow}>
-          {followUpChips.map((chip) => (
-            <QuickReplyChip key={chip.label} {...chip} onPress={() => sendMessage(chip.label)} />
-          ))}
-        </View>
       </ScrollView>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      <View style={styles.inputBar}>
+      <View style={[styles.inputBar, !hasSelectedMode && styles.inputBarDisabled]}>
         <Ionicons name="leaf-outline" size={18} color={colors.primary} style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Type your message..."
+          placeholder={
+            hasSelectedMode ? 'Type your message...' : 'Choose an option above to start chatting...'
+          }
           placeholderTextColor={colors.subtext}
           value={draft}
           onChangeText={setDraft}
           onSubmitEditing={() => sendMessage(draft)}
           returnKeyType="send"
-          editable={!isSending}
+          editable={canUseChatInput}
         />
         <TouchableOpacity
           style={styles.sendButton}
           onPress={() => sendMessage(draft)}
-          disabled={isSending}
+          disabled={!canUseChatInput}
         >
           {isSending ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -373,7 +419,28 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   body: { flex: 1 },
-  bodyContent: { padding: 16, paddingBottom: 8 },
+  bodyContent: { flexGrow: 1, padding: 16, paddingBottom: 8 },
+  chooseModeContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 40,
+  },
+  chooseModeTitle: { fontSize: 20, fontWeight: '700', color: colors.ink, marginTop: 8 },
+  chooseModeSubtitle: { fontSize: 14, color: colors.subtext, marginBottom: 12 },
+  bigButtonGroup: { width: '100%', gap: 12 },
+  bigButton: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: colors.chipBorder,
+    backgroundColor: '#E9F9EF',
+    borderRadius: 16,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bigButtonText: { fontSize: 16, fontWeight: '700', color: colors.ink },
   introCard: {
     flexDirection: 'row',
     gap: 12,
@@ -463,6 +530,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
+  inputBarDisabled: { opacity: 0.5 },
   inputIcon: { marginLeft: 4 },
   input: {
     flex: 1,
