@@ -1,16 +1,20 @@
 import { useEffect } from "react";
+import { View } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { configureMapbox } from "@/lib/mapbox";
+import { colors } from "@/theme/colors";
 
 function RootNavigator() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
+    if (loading) return;
+
     const inAuthGroup = segments[0] === "(auth)";
 
     if (!isAuthenticated && !inAuthGroup) {
@@ -18,7 +22,11 @@ function RootNavigator() {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace("/");
     }
-  }, [isAuthenticated, segments, router]);
+  }, [isAuthenticated, loading, segments, router]);
+
+  if (loading) {
+    return <View style={{ flex: 1, backgroundColor: colors.card }} />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

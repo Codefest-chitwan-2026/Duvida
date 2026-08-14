@@ -17,18 +17,49 @@ import { colors } from "@/features/auth/theme";
 
 const background = require("@/features/auth/assets/login-background.jpeg");
 
+type AuthMode = "login" | "signup";
+
 type LoginScreenProps = {
+  initialMode?: AuthMode;
   onBack?: () => void;
   onLogIn?: (email: string, password: string) => void;
-  onSignUp?: () => void;
+  onSignUp?: (email: string, password: string) => void;
+  submitting?: boolean;
+  error?: string | null;
+  onModeChange?: (mode: AuthMode) => void;
 };
 
-export function LoginScreen({ onBack, onLogIn, onSignUp }: LoginScreenProps) {
+export function LoginScreen({
+  initialMode = "login",
+  onBack,
+  onLogIn,
+  onSignUp,
+  submitting = false,
+  error = null,
+  onModeChange,
+}: LoginScreenProps) {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const canSubmit = email.trim().length > 0 && password.length > 0;
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting;
+  const isSignUp = mode === "signup";
+
+  const toggleMode = () => {
+    const next: AuthMode = isSignUp ? "login" : "signup";
+    setMode(next);
+    onModeChange?.(next);
+  };
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    if (isSignUp) {
+      onSignUp?.(email, password);
+    } else {
+      onLogIn?.(email, password);
+    }
+  };
 
   return (
     <ImageBackground source={background} style={styles.background} resizeMode="cover">
@@ -51,8 +82,12 @@ export function LoginScreen({ onBack, onLogIn, onSignUp }: LoginScreenProps) {
               <View style={styles.iconBadge}>
                 <Ionicons name="leaf" size={26} color={colors.primary} />
               </View>
-              <Text style={styles.title}>Welcome back</Text>
-              <Text style={styles.subtitle}>Log in to keep building a better city.</Text>
+              <Text style={styles.title}>{isSignUp ? "Create your account" : "Welcome back"}</Text>
+              <Text style={styles.subtitle}>
+                {isSignUp
+                  ? "Join the community effort to build a better city."
+                  : "Log in to keep building a better city."}
+              </Text>
 
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputRow}>
@@ -90,7 +125,7 @@ export function LoginScreen({ onBack, onLogIn, onSignUp }: LoginScreenProps) {
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
-                  onSubmitEditing={() => canSubmit && onLogIn?.(email, password)}
+                  onSubmitEditing={handleSubmit}
                   returnKeyType="go"
                 />
                 <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={10}>
@@ -102,23 +137,36 @@ export function LoginScreen({ onBack, onLogIn, onSignUp }: LoginScreenProps) {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.forgotLink} hitSlop={8}>
-                <Text style={styles.forgotLinkText}>Forgot password?</Text>
-              </TouchableOpacity>
+              {!isSignUp && (
+                <TouchableOpacity style={styles.forgotLink} hitSlop={8}>
+                  <Text style={styles.forgotLinkText}>Forgot password?</Text>
+                </TouchableOpacity>
+              )}
+
+              {error && (
+                <View style={styles.errorBox}>
+                  <Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
 
               <TouchableOpacity
                 style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
                 activeOpacity={0.85}
                 disabled={!canSubmit}
-                onPress={() => onLogIn?.(email, password)}
+                onPress={handleSubmit}
               >
-                <Text style={styles.submitButtonText}>Log In</Text>
+                <Text style={styles.submitButtonText}>
+                  {submitting ? "Please wait..." : isSignUp ? "Create Account" : "Log In"}
+                </Text>
               </TouchableOpacity>
 
               <View style={styles.signUpRow}>
-                <Text style={styles.signUpText}>Don&apos;t have an account? </Text>
-                <TouchableOpacity onPress={onSignUp} hitSlop={8}>
-                  <Text style={styles.signUpLink}>Sign up</Text>
+                <Text style={styles.signUpText}>
+                  {isSignUp ? "Already have an account? " : "Don&apos;t have an account? "}
+                </Text>
+                <TouchableOpacity onPress={toggleMode} hitSlop={8} disabled={submitting}>
+                  <Text style={styles.signUpLink}>{isSignUp ? "Log in" : "Sign up"}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -186,6 +234,16 @@ const styles = StyleSheet.create({
   input: { flex: 1, paddingVertical: 12, fontSize: 14, color: colors.ink },
   forgotLink: { alignSelf: "flex-end", marginTop: 12 },
   forgotLinkText: { fontSize: 12.5, color: colors.primaryDark, fontWeight: "600" },
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 14,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "#FEE2E2",
+  },
+  errorText: { flex: 1, fontSize: 12.5, color: "#DC2626", fontWeight: "600" },
   submitButton: {
     marginTop: 22,
     backgroundColor: colors.primary,

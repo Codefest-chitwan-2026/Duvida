@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "@/theme/colors";
+import { useAuth } from "@/lib/auth";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -108,6 +109,7 @@ const RECENT_BADGES: RecentBadge[] = [
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { signOut } = useAuth();
   const progress = Math.min(100, (PROFILE.currentXp / PROFILE.nextLevelXp) * 100);
 
   const showComingSoon = (feature: string) => {
@@ -254,6 +256,15 @@ export function ProfileScreen() {
               ))}
             </View>
           </SectionCard>
+
+          <Pressable
+            accessibilityLabel="Log out"
+            onPress={() => signOut()}
+            style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
+          >
+            <Ionicons name="log-out-outline" size={18} color="#DC2626" />
+            <Text style={styles.logoutText}>Log Out</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -466,6 +477,24 @@ const styles = StyleSheet.create({
     marginTop: -8,
     paddingHorizontal: 14,
     gap: 14,
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 4,
+    marginBottom: 8,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+    backgroundColor: "#FEF2F2",
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#DC2626",
   },
   card: {
     backgroundColor: colors.card,

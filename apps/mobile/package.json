@@ -16,6 +16,7 @@
   "dependencies": {
     "@duvidha/shared": "workspace:*",
     "@expo/metro-runtime": "~57.0.9",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@expo/vector-icons": "^15.1.1",
     "@rnmapbox/maps": "^10.3.5",
     "@supabase/supabase-js": "^2.48.1",
