@@ -13,7 +13,7 @@ import { colors } from "@/theme/colors";
 const COMPANION_IMAGE = require("@/assets/companion.png");
 
 const DEFAULT_TIPS = [
-  "Welcome back, Citizen! 🌱 Ready to clean up the city today? Check nearby hazards or start a quest!",
+  "Welcome back, Citizen! 🌿 Ready to clean up the city today? Check nearby hazards or start a quest!",
   "Tip: You can earn +150 XP and Civic Coins by confirming potholes or waste reports in your area! 🪙",
   "Great job! Keep participating in community cleanups to unlock the 'Eco Guardian' badge! 🏆",
 ];
@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
     zIndex: 45,
   },
   characterWrap: {
-    width: 84,
-    height: 106,
+    width: 94,
+    height: 120,
     alignItems: "center",
     justifyContent: "center",
   },
