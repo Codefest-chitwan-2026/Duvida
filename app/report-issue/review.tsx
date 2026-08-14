@@ -6,12 +6,31 @@ import { useRouter } from 'expo-router';
 import Header from '../../components/common/Header';
 import Button from '../../components/common/Button';
 import IssueProgress from '../../components/issue/IssueProgress';
+import ReviewSummaryRow from '../../components/issue/ReviewSummaryRow';
+import { useIssueForm } from '../../hooks/useIssueForm';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
 
+const CATEGORY_LABELS: Record<string, string> = {
+  pothole: 'Pothole',
+  streetlight: 'Streetlight',
+  garbage: 'Garbage',
+  traffic: 'Traffic',
+  water: 'Water',
+  other: 'Other',
+};
+
+const SEVERITY_STYLES: Record<string, { label: string; color: string; surface: string }> = {
+  low: { label: 'Low', color: colors.primaryGreen, surface: colors.greenSurface },
+  medium: { label: 'Medium', color: colors.amber, surface: colors.amberSurface },
+  high: { label: 'High', color: colors.red, surface: colors.redSurface },
+};
+
 export default function ReviewScreen() {
   const router = useRouter();
+  const { formData } = useIssueForm();
+  const severity = SEVERITY_STYLES[formData.severity];
 
   const handleSubmit = () => {
     Alert.alert('Issue Submitted', 'This is a mock submission. No data was sent to a server.');
@@ -31,6 +50,27 @@ export default function ReviewScreen() {
             <Text style={styles.editIcon}>✎</Text>
           </TouchableOpacity>
         </View>
+
+        <ReviewSummaryRow icon="🏷️" label="Type">
+          <Text style={styles.valueText}>{CATEGORY_LABELS[formData.category]}</Text>
+        </ReviewSummaryRow>
+
+        <ReviewSummaryRow icon="📍" label="Location">
+          <Text style={styles.valueText}>{formData.location.address}</Text>
+          <Text style={styles.subValueText}>
+            Lat {formData.location.latitude.toFixed(4)}, Long {formData.location.longitude.toFixed(4)}
+          </Text>
+        </ReviewSummaryRow>
+
+        <ReviewSummaryRow icon="📝" label="Description">
+          <Text style={styles.valueText}>{formData.description}</Text>
+        </ReviewSummaryRow>
+
+        <ReviewSummaryRow icon="⚠️" label="Severity Level">
+          <View style={[styles.badge, { backgroundColor: severity.surface }]}>
+            <Text style={[styles.badgeText, { color: severity.color }]}>{severity.label}</Text>
+          </View>
+        </ReviewSummaryRow>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -85,6 +125,27 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     color: colors.primaryGreen,
     fontWeight: fontWeight.bold,
+  },
+  valueText: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
+    lineHeight: 20,
+  },
+  subValueText: {
+    marginTop: 2,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  badgeText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
   footer: {
     paddingHorizontal: spacing.lg,
