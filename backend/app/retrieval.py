@@ -36,3 +36,11 @@ def retrieve(query: str, top_k: int = 5) -> List[RetrievedChunk]:
         }
         for text, metadata, distance in zip(documents, metadatas, distances)
     ]
+
+
+def format_retrieved_chunks(chunks: List[RetrievedChunk]) -> str:
+    """Render retrieved chunks as a knowledge string, source metadata included."""
+    return "\n\n".join(
+        f"[Source: {chunk['source']}, chunk {chunk['chunk_index']}]\n{chunk['text']}"
+        for chunk in chunks
+    )

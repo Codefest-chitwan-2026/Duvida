@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .document_loader import load_knowledge_text
 from .gemini_client import ask_ecobot
+from .retrieval import format_retrieved_chunks, retrieve
 from .schemas import ChatReply, ChatRequest
 
 app = FastAPI(title="Sustainability Advisor API")
@@ -28,4 +29,6 @@ def health():
 
 @app.post("/chat", response_model=ChatReply)
 def chat(request: ChatRequest):
-    return ask_ecobot(request.message, _knowledge_text)
+    retrieved_chunks = retrieve(request.message, top_k=5)
+    knowledge = format_retrieved_chunks(retrieved_chunks)
+    return ask_ecobot(request.message, knowledge)
