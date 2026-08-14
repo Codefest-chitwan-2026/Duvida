@@ -1,4 +1,5 @@
 import pathlib
+from typing import Iterator, Tuple
 
 import fitz  # PyMuPDF
 from docx import Document
@@ -6,21 +7,28 @@ from docx import Document
 KNOWLEDGE_DIR = pathlib.Path(__file__).resolve().parent.parent / "sustainability_knowledge"
 
 
-def load_knowledge_text() -> str:
+def iter_documents() -> Iterator[Tuple[str, str]]:
+    """Yield (filename, extracted_text) for each supported file in the knowledge dir."""
     if not KNOWLEDGE_DIR.exists():
-        return ""
+        return
 
-    chunks = []
     for path in sorted(KNOWLEDGE_DIR.iterdir()):
         suffix = path.suffix.lower()
         if suffix == ".pdf":
-            chunks.append(_read_pdf(path))
+            text = _read_pdf(path)
         elif suffix == ".docx":
-            chunks.append(_read_docx(path))
+            text = _read_docx(path)
         elif suffix == ".txt":
-            chunks.append(path.read_text(encoding="utf-8"))
+            text = path.read_text(encoding="utf-8")
+        else:
+            continue
 
-    return "\n\n".join(chunk for chunk in chunks if chunk.strip())
+        if text.strip():
+            yield path.name, text
+
+
+def load_knowledge_text() -> str:
+    return "\n\n".join(text for _, text in iter_documents())
 
 
 def _read_pdf(path: pathlib.Path) -> str:
