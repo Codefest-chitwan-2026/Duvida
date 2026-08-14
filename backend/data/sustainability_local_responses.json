@@ -1,384 +1,97 @@
 {
-  "version": 1,
-  "purpose": "Local deterministic sustainability responses and simple guided conversations before falling back to RAG/Gemini.",
-  "fallback": {
-    "action": "rag",
-    "note": "If no local intent/flow matches, send the query to the existing RAG pipeline."
-  },
-  "quest_categories": [
-    "water",
-    "waste",
-    "greenery",
-    "energy",
-    "transport",
-    "community"
-  ],
-  "sdg_focus": {
-    "primary": [
-      11,
-      12,
-      13
-    ],
-    "secondary": [
-      1,
-      2,
-      3,
-      4,
-      10
-    ]
-  },
   "intents": [
     {
-      "id": "water_tip",
+      "id": "water_advice",
       "category": "water",
-      "sdgs": [
-        6,
-        11,
-        12,
-        13
-      ],
+      "sdgs": [6,11,12,13],
       "triggers": [
+        "save water",
+        "water saving",
+        "water conservation",
+        "reduce water waste",
+        "water usage",
         "how can i save water",
-        "water saving tip",
-        "save water at home",
-        "reduce water use",
-        "reduce water consumption"
+        "water tips"
       ],
-      "mode": "guided",
-      "start_response": "I can give you a quick water-saving plan. First, how long is your usual shower or bath?",
-      "flow_id": "water_personalization"
+      "mode": "static",
+      "answer": "💧 Water Conservation\n\nWater is a valuable resource that supports communities, agriculture, and ecosystems. Many people waste water unknowingly through daily habits such as long showers, leaking taps, and unnecessary usage.\n\nYou can reduce water waste by:\n• Fixing leaking taps and pipes\n• Taking shorter showers\n• Turning off taps when water is not needed\n• Reusing water where possible\n• Using water carefully during cleaning and gardening\n\nSaving water protects freshwater resources, helps communities prepare for shortages, and supports a more sustainable future.\n\n🌍 Related SDGs:\nSDG 6 - Clean Water and Sanitation\nSDG 11 - Sustainable Cities and Communities\nSDG 12 - Responsible Consumption\nSDG 13 - Climate Action"
     },
+
     {
-      "id": "waste_tip",
+      "id": "waste_advice",
       "category": "waste",
-      "sdgs": [
-        11,
-        12,
-        13
-      ],
+      "sdgs": [11,12,13],
       "triggers": [
-        "waste saving tip",
         "reduce waste",
-        "how can i recycle",
-        "recycling tip",
-        "manage household waste"
+        "recycling",
+        "waste management",
+        "plastic waste",
+        "separate waste",
+        "how can i recycle"
       ],
       "mode": "static",
-      "answer": "Start by separating recyclable, organic, and residual waste. Avoid single-use items where practical and reuse containers before disposing of them.",
-      "quests": [
-        {
-          "title": "Sort today's household waste",
-          "description": "Separate recyclable, organic, and residual waste for one day.",
-          "category": "waste",
-          "difficulty": "easy",
-          "sdgs": [
-            11,
-            12
-          ]
-        }
-      ]
+      "answer": "♻️ Waste Management\n\nWaste management is important because poorly managed waste can pollute land, water, and air while affecting public health. Small changes in daily habits can significantly reduce the amount of waste reaching landfills.\n\nYou can manage waste better by:\n• Separating recyclable, organic, and general waste\n• Reducing single-use plastics\n• Reusing items before throwing them away\n• Composting organic waste when possible\n• Choosing products with less packaging\n\nResponsible waste management keeps communities cleaner, reduces pollution, and supports a circular economy where resources are reused instead of wasted.\n\n🌍 Related SDGs:\nSDG 11 - Sustainable Cities and Communities\nSDG 12 - Responsible Consumption and Production\nSDG 13 - Climate Action"
     },
+
     {
-      "id": "energy_tip",
+      "id": "greenery_advice",
+      "category": "greenery",
+      "sdgs": [11,13,15],
+      "triggers": [
+        "plant trees",
+        "green spaces",
+        "biodiversity",
+        "protect nature",
+        "trees",
+        "greenery"
+      ],
+      "mode": "static",
+      "answer": "🌱 Greenery & Biodiversity\n\nPlants, trees, and natural ecosystems play an important role in maintaining clean air, supporting wildlife, reducing heat, and improving the quality of life in communities.\n\nYou can support greenery by:\n• Planting and caring for suitable local plants\n• Protecting existing trees and green areas\n• Avoiding activities that damage natural habitats\n• Supporting biodiversity around your community\n• Creating small green spaces at home or school\n\nProtecting nature helps communities become more resilient to climate change and preserves ecosystems for future generations.\n\n🌍 Related SDGs:\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action\nSDG 15 - Life on Land"
+    },
+
+    {
+      "id": "energy_advice",
       "category": "energy",
-      "sdgs": [
-        7,
-        11,
-        12,
-        13
-      ],
+      "sdgs": [7,11,12,13],
       "triggers": [
-        "energy saving tip",
         "save electricity",
-        "reduce energy use",
-        "reduce electricity use"
+        "energy saving",
+        "reduce energy",
+        "electricity usage",
+        "renewable energy"
       ],
       "mode": "static",
-      "answer": "Turn off unused lights and devices, avoid leaving chargers plugged in unnecessarily, and use efficient lighting and appliances when available.",
-      "quests": [
-        {
-          "title": "Switch off unused devices",
-          "description": "Check one room and switch off lights or devices that are not being used.",
-          "category": "energy",
-          "difficulty": "easy",
-          "sdgs": [
-            12,
-            13
-          ]
-        }
-      ]
+      "answer": "⚡ Energy Efficiency\n\nEnergy consumption affects both household costs and the environment. Reducing unnecessary energy use helps lower emissions and supports cleaner energy systems.\n\nYou can save energy by:\n• Turning off unused lights and appliances\n• Using energy-efficient bulbs and devices\n• Avoiding unnecessary standby power usage\n• Using natural light when possible\n• Supporting renewable energy solutions\n\nEnergy efficiency reduces environmental impact while helping communities move toward cleaner and more sustainable energy use.\n\n🌍 Related SDGs:\nSDG 7 - Affordable and Clean Energy\nSDG 11 - Sustainable Cities and Communities\nSDG 12 - Responsible Consumption\nSDG 13 - Climate Action"
     },
+
     {
-      "id": "transport_tip",
+      "id": "transport_advice",
       "category": "transport",
-      "sdgs": [
-        11,
-        12,
-        13
-      ],
+      "sdgs": [11,13],
       "triggers": [
-        "sustainable transport tip",
+        "sustainable transport",
         "low carbon transport",
         "reduce transport emissions",
-        "walk or cycle"
+        "walking",
+        "cycling"
       ],
       "mode": "static",
-      "answer": "For short trips, walking or cycling can reduce emissions. For longer trips, public transport or sharing rides can reduce the number of vehicles used.",
-      "quests": [
-        {
-          "title": "Choose a lower-carbon trip",
-          "description": "Replace one short vehicle trip with walking, cycling, public transport, or a shared ride.",
-          "category": "transport",
-          "difficulty": "easy",
-          "sdgs": [
-            11,
-            13
-          ]
-        }
-      ]
+      "answer": "🚶 Sustainable Transport\n\nTransportation is a major contributor to greenhouse gas emissions. Choosing cleaner travel options can improve air quality and create healthier communities.\n\nYou can make transport more sustainable by:\n• Walking or cycling for short distances\n• Using public transportation when available\n• Sharing rides when possible\n• Reducing unnecessary vehicle trips\n• Supporting cleaner transportation options\n\nSustainable transport reduces emissions, improves public health, and helps cities become more livable.\n\n🌍 Related SDGs:\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action"
     },
+
     {
-      "id": "greenery_tip",
-      "category": "greenery",
-      "sdgs": [
-        11,
-        13,
-        15
-      ],
-      "triggers": [
-        "greenery tip",
-        "plant trees",
-        "protect green space",
-        "biodiversity tip"
-      ],
-      "mode": "static",
-      "answer": "Protect existing trees and green spaces first. Where planting is appropriate, choose locally suitable species and make sure there is a plan to care for them after planting.",
-      "quests": [
-        {
-          "title": "Care for a local green space",
-          "description": "Spend a short session watering, cleaning, or caring for a tree or nearby green space.",
-          "category": "greenery",
-          "difficulty": "easy",
-          "sdgs": [
-            11,
-            13
-          ]
-        }
-      ]
-    },
-    {
-      "id": "community_tip",
+      "id": "community_advice",
       "category": "community",
-      "sdgs": [
-        3,
-        10,
-        11,
-        12,
-        13
-      ],
+      "sdgs": [10,11,13],
       "triggers": [
         "community action",
-        "community sustainability",
-        "join cleanup",
-        "help my community"
+        "help community",
+        "cleanup",
+        "citizen participation",
+        "environmental action"
       ],
       "mode": "static",
-      "answer": "Choose a small local action that other people can verify, such as joining a cleanup, reporting a local environmental issue, or helping confirm a community report.",
-      "quests": [
-        {
-          "title": "Take one verified community action",
-          "description": "Join a local cleanup, report an environmental issue, or help verify an existing community report.",
-          "category": "community",
-          "difficulty": "easy",
-          "sdgs": [
-            10,
-            11,
-            13
-          ]
-        }
-      ]
-    },
-    {
-      "id": "sdg_11",
-      "category": "community",
-      "sdgs": [
-        11
-      ],
-      "triggers": [
-        "what is sdg 11",
-        "sdg 11",
-        "sustainable cities and communities"
-      ],
-      "mode": "static",
-      "answer": "SDG 11 is Sustainable Cities and Communities. It focuses on making human settlements inclusive, safe, resilient, and sustainable.",
-      "quests": []
-    },
-    {
-      "id": "sdg_12",
-      "category": "waste",
-      "sdgs": [
-        12
-      ],
-      "triggers": [
-        "what is sdg 12",
-        "sdg 12",
-        "responsible consumption and production"
-      ],
-      "mode": "static",
-      "answer": "SDG 12 is Responsible Consumption and Production. It focuses on using resources more efficiently, reducing waste, and improving how goods are produced and consumed.",
-      "quests": []
-    },
-    {
-      "id": "sdg_13",
-      "category": "community",
-      "sdgs": [
-        13
-      ],
-      "triggers": [
-        "what is sdg 13",
-        "sdg 13",
-        "climate action"
-      ],
-      "mode": "static",
-      "answer": "SDG 13 is Climate Action. It calls for urgent action to address climate change and strengthen resilience to climate-related impacts.",
-      "quests": []
-    },
-    {
-      "id": "sdg_advice_menu",
-      "category": "community",
-      "sdgs": [
-        11,
-        12,
-        13
-      ],
-      "triggers": [
-        "i need sdg advice"
-      ],
-      "mode": "static",
-      "answer": "Sure! 🌱 What would you like advice on?",
-      "quests": []
+      "answer": "🏘️ Community Action\n\nSustainability cannot be achieved by individuals alone. Communities working together can identify local problems, create solutions, and build a cleaner and more resilient environment.\n\nYou can contribute by:\n• Joining local cleanup activities\n• Reporting environmental problems\n• Helping maintain public spaces\n• Sharing sustainability awareness\n• Supporting community improvement projects\n\nWhen citizens participate actively, small actions become collective impact and create stronger sustainable communities.\n\n🌍 Related SDGs:\nSDG 10 - Reduced Inequalities\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action"
     }
-  ],
-  "guided_flows": {
-    "water_personalization": {
-      "category": "water",
-      "sdgs": [
-        6,
-        11,
-        12,
-        13
-      ],
-      "steps": [
-        {
-          "id": "shower_minutes",
-          "question": "About how many minutes is your usual shower or bath?",
-          "type": "number",
-          "store_as": "shower_minutes"
-        },
-        {
-          "id": "known_leaks",
-          "question": "Do you currently know of any leaking taps, pipes, or toilets at home?",
-          "type": "choice",
-          "choices": [
-            "yes",
-            "no",
-            "not sure"
-          ],
-          "store_as": "known_leaks"
-        },
-        {
-          "id": "laundry_habit",
-          "question": "Do you usually run the washing machine only when you have a full load?",
-          "type": "choice",
-          "choices": [
-            "yes",
-            "no",
-            "sometimes",
-            "not applicable"
-          ],
-          "store_as": "full_laundry_load"
-        }
-      ],
-      "recommendation_rules": [
-        {
-          "when": {
-            "field": "shower_minutes",
-            "operator": ">",
-            "value": 10
-          },
-          "recommendation": "Try reducing your shower by a few minutes and track whether the shorter routine still works for you.",
-          "quest": {
-            "title": "Shorten your shower",
-            "description": "Reduce your usual shower time for the next 3 days.",
-            "category": "water",
-            "difficulty": "easy",
-            "sdgs": [
-              6,
-              12,
-              13
-            ]
-          }
-        },
-        {
-          "when": {
-            "field": "known_leaks",
-            "operator": "==",
-            "value": "yes"
-          },
-          "recommendation": "Prioritize checking and fixing the known leak because continuous leaks can waste water over time.",
-          "quest": {
-            "title": "Inspect the known leak",
-            "description": "Check the leaking tap, pipe, or toilet and arrange a repair if needed.",
-            "category": "water",
-            "difficulty": "easy",
-            "sdgs": [
-              6,
-              12
-            ]
-          }
-        },
-        {
-          "when": {
-            "field": "known_leaks",
-            "operator": "==",
-            "value": "not sure"
-          },
-          "recommendation": "Do a quick leak check around taps, toilets, and visible pipes.",
-          "quest": {
-            "title": "Do a household leak check",
-            "description": "Inspect taps, toilets, and visible pipes for signs of leakage.",
-            "category": "water",
-            "difficulty": "easy",
-            "sdgs": [
-              6,
-              12
-            ]
-          }
-        },
-        {
-          "when": {
-            "field": "full_laundry_load",
-            "operator": "in",
-            "value": [
-              "no",
-              "sometimes"
-            ]
-          },
-          "recommendation": "When practical, wait for a fuller laundry load instead of running many small loads.",
-          "quest": {
-            "title": "Run one full laundry load",
-            "description": "Wait until you have a reasonably full load before using the washing machine.",
-            "category": "water",
-            "difficulty": "easy",
-            "sdgs": [
-              6,
-              12
-            ]
-          }
-        }
-      ],
-      "default_recommendation": "Your habits already avoid several common sources of unnecessary household water use. Keep monitoring for leaks and avoid using more water than needed.",
-      "completion_text": "Based on your answers, here is a simple water-saving plan:"
-    }
-  }
+  ]
 }

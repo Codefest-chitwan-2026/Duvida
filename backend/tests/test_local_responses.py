@@ -16,6 +16,7 @@ client = TestClient(app)
 # One trigger phrase per "static" intent in sustainability_local_responses.json —
 # these should be answered locally, no Gemini call.
 STATIC_QUERIES = [
+    "water saving tip",
     "reduce waste",
     "energy saving tip",
     "sustainable transport tip",
@@ -25,13 +26,6 @@ STATIC_QUERIES = [
     "What is SDG 12?",
     "What is SDG 13?",
     "I need SDG Advice",
-]
-
-# water_tip is mode == "guided" in the data (tied to the water_personalization
-# flow). Guided conversations aren't implemented yet, so this must NOT match
-# locally — it should fall through to RAG, unlike the static intents above.
-GUIDED_QUERIES = [
-    "water saving tip",
 ]
 
 COMPLEX_QUERIES = [
@@ -44,8 +38,8 @@ def test_data_file_has_expected_intent_modes():
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     modes = {intent["id"]: intent["mode"] for intent in data["intents"]}
 
-    assert modes["water_tip"] == "guided"
     for intent_id in [
+        "water_tip",
         "waste_tip",
         "energy_tip",
         "transport_tip",
@@ -57,6 +51,15 @@ def test_data_file_has_expected_intent_modes():
         "sdg_advice_menu",
     ]:
         assert modes[intent_id] == "static"
+
+
+def test_water_tip_matches_locally_with_quests():
+    reply = match_local_response("water saving tip")
+    assert reply is not None
+    assert isinstance(reply["answer"], str) and reply["answer"]
+    assert 1 <= len(reply["quests"]) <= 2
+    for quest in reply["quests"]:
+        assert set(quest.keys()) == {"title", "description"}
 
 
 def test_sdg_advice_menu_returns_expected_prompt():
@@ -78,8 +81,8 @@ def test_static_intents_match_with_valid_schema(message):
         assert set(quest.keys()) == {"title", "description"}
 
 
-@pytest.mark.parametrize("message", GUIDED_QUERIES + COMPLEX_QUERIES)
-def test_guided_and_complex_queries_do_not_match_locally(message):
+@pytest.mark.parametrize("message", COMPLEX_QUERIES)
+def test_complex_queries_do_not_match_locally(message):
     assert match_local_response(message) is None
 
 
@@ -94,8 +97,8 @@ def test_static_intents_skip_gemini(message):
         assert "quests" in response.json()
 
 
-@pytest.mark.parametrize("message", GUIDED_QUERIES + COMPLEX_QUERIES)
-def test_guided_and_complex_queries_fall_through_to_gemini(message):
+@pytest.mark.parametrize("message", COMPLEX_QUERIES)
+def test_complex_queries_fall_through_to_gemini(message):
     with patch("app.main.ask_ecobot") as mock_ask, patch("app.main.retrieve") as mock_retrieve:
         mock_retrieve.return_value = []
         mock_ask.return_value = {"answer": "stub answer", "quests": []}
