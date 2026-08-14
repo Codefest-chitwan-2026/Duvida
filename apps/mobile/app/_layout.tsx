@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { View } from "react-native";
+import { useEffect, useState } from "react";
+import { View, Text } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -25,7 +25,11 @@ function RootNavigator() {
   }, [isAuthenticated, loading, segments, router]);
 
   if (loading) {
-    return <View style={{ flex: 1, backgroundColor: colors.card }} />;
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.card, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: "#999", fontSize: 14 }}>Loading...</Text>
+      </View>
+    );
   }
 
   return (

@@ -19,6 +19,7 @@ type AuthContextValue = {
   user: User | null;
   profile: Profile | null;
   error: string | null;
+  notice: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -49,6 +50,9 @@ function toErrorMessage(err: unknown): string {
   if (/invalid login credentials/i.test(message)) {
     return "Incorrect email or password.";
   }
+  if (/email not confirmed/i.test(message)) {
+    return "Please confirm your email before logging in. Check your inbox for the confirmation link.";
+  }
   if (/already registered|user already exists/i.test(message)) {
     return "An account with this email already exists.";
   }
@@ -71,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const loadProfile = useCallback(async (userId: string) => {
     const { data, error: profileError } = await supabase
@@ -119,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
+    setNotice(null);
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
       setError(toErrorMessage(signInError));
@@ -131,10 +137,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (signUpInFlightRef.current) return;
     signUpInFlightRef.current = true;
     setError(null);
+    setNotice(null);
     try {
-      const { error: signUpError } = await supabase.auth.signUp({ email, password });
+      const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
       if (signUpError) {
         setError(toErrorMessage(signUpError));
+      } else if (data.user && !data.session) {
+        setNotice("Account created! Check your email to confirm your account, then log in.");
       }
     } finally {
       signUpInFlightRef.current = false;
@@ -143,13 +152,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     setError(null);
+    setNotice(null);
     const { error: signOutError } = await supabase.auth.signOut();
     if (signOutError) {
       setError(toErrorMessage(signOutError));
     }
   }, []);
 
-  const clearError = useCallback(() => setError(null), []);
+  const clearError = useCallback(() => {
+    setError(null);
+    setNotice(null);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -158,12 +171,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       error,
+      notice,
       signIn,
       signUp,
       signOut,
       clearError,
     }),
-    [session, loading, profile, error, signIn, signUp, signOut, clearError]
+    [session, loading, profile, error, notice, signIn, signUp, signOut, clearError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

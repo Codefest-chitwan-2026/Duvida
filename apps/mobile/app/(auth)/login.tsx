@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth";
 export default function Login() {
   const router = useRouter();
   const { mode: modeParam } = useLocalSearchParams<{ mode?: string }>();
-  const { signIn, signUp, error, clearError } = useAuth();
+  const { signIn, signUp, error, notice, clearError } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
   const initialMode = modeParam === "signup" ? "signup" : "login";
@@ -32,6 +32,7 @@ export default function Login() {
       onSignUp={handleSignUp}
       submitting={submitting}
       error={error}
+      notice={notice}
       onModeChange={clearError}
     />
   );

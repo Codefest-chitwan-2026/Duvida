@@ -26,6 +26,7 @@ type LoginScreenProps = {
   onSignUp?: (email: string, password: string) => void;
   submitting?: boolean;
   error?: string | null;
+  notice?: string | null;
   onModeChange?: (mode: AuthMode) => void;
 };
 
@@ -36,6 +37,7 @@ export function LoginScreen({
   onSignUp,
   submitting = false,
   error = null,
+  notice = null,
   onModeChange,
 }: LoginScreenProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -143,6 +145,13 @@ export function LoginScreen({
                 </TouchableOpacity>
               )}
 
+              {notice && !error && (
+                <View style={styles.noticeBox}>
+                  <Ionicons name="checkmark-circle-outline" size={16} color={colors.primaryDark} />
+                  <Text style={styles.noticeText}>{notice}</Text>
+                </View>
+              )}
+
               {error && (
                 <View style={styles.errorBox}>
                   <Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
@@ -244,6 +253,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEE2E2",
   },
   errorText: { flex: 1, fontSize: 12.5, color: "#DC2626", fontWeight: "600" },
+  noticeBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 14,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "#E9F9EF",
+  },
+  noticeText: { flex: 1, fontSize: 12.5, color: colors.primaryDark, fontWeight: "600" },
   submitButton: {
     marginTop: 22,
     backgroundColor: colors.primary,
