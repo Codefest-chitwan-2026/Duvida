@@ -35,66 +35,10 @@ type Message =
   | { id: string; sender: 'user'; time: string; text: string }
   | { id: string; sender: 'bot'; time: string; body: BotBody };
 
-const initialMessages: Message[] = [
-  {
-    id: 'u1',
-    sender: 'user',
-    time: 'Today 10:30 AM',
-    text: 'How can I earn more tokens quickly?',
-  },
-  {
-    id: 'b1',
-    sender: 'bot',
-    time: '10:30 AM',
-    body: {
-      kind: 'numbered',
-      intro: 'Great question! Here are the fastest ways to earn tokens:',
-      items: [
-        'Report real issues in your area with clear photos.',
-        'Complete community quests and challenges.',
-        'Verify reports and help confirm issues.',
-        'Participate in local cleanups or tree plantation drives.',
-        'Share helpful sustainability tips with the community.',
-      ],
-      outro: 'Every action you take makes a real impact! 🌍✨',
-    },
-  },
-  {
-    id: 'u2',
-    sender: 'user',
-    time: 'Today 10:32 AM',
-    text: 'What are some easy daily sustainability habits?',
-  },
-  {
-    id: 'b2',
-    sender: 'bot',
-    time: '10:32 AM',
-    body: {
-      kind: 'bulleted',
-      intro: 'Here are some simple daily habits you can follow:',
-      items: [
-        { emoji: '💧', text: 'Save water – Take shorter showers and fix leaks.' },
-        { emoji: '♻️', text: 'Reduce waste – Avoid single-use plastics.' },
-        { emoji: '🚶', text: 'Walk or cycle – Reduce your carbon footprint.' },
-        { emoji: '🌱', text: 'Plant more trees and care for green spaces.' },
-        { emoji: '🔌', text: 'Save energy – Turn off lights and unplug devices.' },
-      ],
-      outro: 'Small steps every day create big change! 💚',
-    },
-  },
-];
-
 const introChips: QuickReply[] = [
   { icon: 'leaf-outline', label: 'Sustainability Tips' },
   { icon: 'ellipse-outline', label: 'How Tokens Work' },
   { icon: 'location-outline', label: 'Report Help' },
-];
-
-const followUpChips: QuickReply[] = [
-  { icon: 'leaf-outline', label: 'More Tips' },
-  { icon: 'trophy-outline', label: 'Quest Suggestions' },
-  { icon: 'ellipse-outline', label: 'How Tokens Work' },
-  { icon: 'location-outline', label: 'Help' },
 ];
 
 function BotAvatar({ size = 40 }: { size?: number }) {
@@ -127,17 +71,24 @@ const actionButtons: ActionButtonConfig[] = [
 ];
 
 // Must match backend/data/sustainability_local_responses.json's "sdg_advice_menu"
-// answer exactly — the UI uses it to decide when to show the category buttons.
+// answer exactly — the UI uses it to know when to follow up with the topic list.
 const SDG_ADVICE_MENU_PROMPT = 'Sure! 🌱 What would you like advice on?';
 
-const sdgAdviceCategories: ActionButtonConfig[] = [
-  { label: '💧 Water', message: 'Give me a water saving tip' },
-  { label: '♻️ Waste', message: 'Tell me how to reduce waste' },
-  { label: '🌱 Greenery', message: 'Give me a greenery tip' },
-  { label: '⚡ Energy', message: 'Give me an energy saving tip' },
-  { label: '🚶 Transport', message: 'Give me a sustainable transport tip' },
-  { label: '🏘️ Community', message: 'Tell me about community action I can take' },
-];
+// Purely informational — the user types their own question next, and the
+// answer comes from the normal /chat flow (local response system, then RAG).
+const SDG_ADVICE_TOPICS: BotBody = {
+  kind: 'numbered',
+  intro: 'You can ask advice related to:',
+  items: [
+    'Saving water',
+    'Reducing waste',
+    'Energy saving tips',
+    'Low carbon transport',
+    'Greenery tips',
+    'Helping community',
+    'What is SDG 11',
+  ],
+};
 
 function BigActionButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -222,7 +173,7 @@ export default function SustainabilityAdvisorScreen({
 }: {
   onBack?: () => void;
 }) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('report');
   const [isSending, setIsSending] = useState(false);
@@ -230,12 +181,6 @@ export default function SustainabilityAdvisorScreen({
   const [hasSelectedMode, setHasSelectedMode] = useState(false);
 
   const canUseChatInput = hasSelectedMode && !isSending;
-
-  const lastMessage = messages[messages.length - 1];
-  const showSdgAdviceCategories =
-    lastMessage?.sender === 'bot' &&
-    lastMessage.body.kind === 'text' &&
-    lastMessage.body.text === SDG_ADVICE_MENU_PROMPT;
 
   const handleActionButtonPress = (message: string) => {
     setHasSelectedMode(true);
@@ -268,10 +213,24 @@ export default function SustainabilityAdvisorScreen({
 
       const data: { answer: string } = await response.json();
       const botTime = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-      setMessages((prev) => [
-        ...prev,
-        { id: `b-${Date.now()}`, sender: 'bot', time: botTime, body: { kind: 'text', text: data.answer } },
-      ]);
+      const reply: Message = {
+        id: `b-${Date.now()}`,
+        sender: 'bot',
+        time: botTime,
+        body: { kind: 'text', text: data.answer },
+      };
+
+      if (data.answer === SDG_ADVICE_MENU_PROMPT) {
+        const topics: Message = {
+          id: `b-${Date.now()}-topics`,
+          sender: 'bot',
+          time: botTime,
+          body: SDG_ADVICE_TOPICS,
+        };
+        setMessages((prev) => [...prev, reply, topics]);
+      } else {
+        setMessages((prev) => [...prev, reply]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -325,26 +284,6 @@ export default function SustainabilityAdvisorScreen({
                 <BotMessage key={message.id} time={message.time} body={message.body} />
               )
             )}
-
-            {showSdgAdviceCategories && (
-              <View style={styles.chipRow}>
-                {sdgAdviceCategories.map((category) => (
-                  <TouchableOpacity
-                    key={category.label}
-                    style={styles.chip}
-                    onPress={() => sendMessage(category.message)}
-                  >
-                    <Text style={styles.chipText}>{category.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            <View style={styles.chipRow}>
-              {followUpChips.map((chip) => (
-                <QuickReplyChip key={chip.label} {...chip} onPress={() => sendMessage(chip.label)} />
-              ))}
-            </View>
           </>
         ) : (
           <View style={styles.chooseModeContainer}>
