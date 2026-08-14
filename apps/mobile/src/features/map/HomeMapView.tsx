@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { StyleSheet } from "react-native";
-import Mapbox from "@rnmapbox/maps";
+import type Mapbox from "@rnmapbox/maps";
 
 import { IssueMarker } from "@/components/IssueMarker";
 import { PlayerMarker } from "@/components/PlayerMarker";
@@ -11,6 +11,20 @@ import type { Coordinate } from "@/services/location/useUserLocation";
 
 const CITY_ZOOM_LEVEL = 16.5;
 const TILT_PITCH = 60;
+
+// Guarded the same way as src/lib/mapbox.ts: @rnmapbox/maps registers a
+// native module as soon as it's required, which throws when the native code
+// isn't linked (Expo Go, or a dev client built before the config plugin was
+// added). Expo Router eagerly requires every route file — including this
+// screen, via app/(tabs)/index.tsx — while validating routes in
+// development, so an unguarded top-level import here can crash app startup
+// before the user ever opens this tab.
+let MapboxModule: typeof Mapbox | null = null;
+try {
+  MapboxModule = require("@rnmapbox/maps").default;
+} catch (error) {
+  console.warn("[HomeMapView] @rnmapbox/maps native module unavailable", error);
+}
 
 type HomeMapViewProps = {
   center: Coordinate;
@@ -28,12 +42,14 @@ export type { HomeMapHandle };
  */
 export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
   ({ center, is3D, selectedCategory = "all", selectedIssueId, onIssuePress }, ref) => {
+    const mapbox = MapboxModule;
+    const mapboxReady = hasMapboxToken && mapbox !== null;
     const cameraRef = useRef<Mapbox.Camera>(null);
     const fallbackRef = useRef<HomeMapHandle>(null);
 
     useImperativeHandle(ref, () => ({
       recenter: () => {
-        if (hasMapboxToken) {
+        if (mapboxReady) {
           cameraRef.current?.setCamera({
             centerCoordinate: [center.longitude, center.latitude],
             zoomLevel: CITY_ZOOM_LEVEL,
@@ -44,25 +60,25 @@ export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
         }
       },
       resetBearing: () => {
-        if (hasMapboxToken) {
+        if (mapboxReady) {
           cameraRef.current?.setCamera({ heading: 0, animationDuration: 300 });
         } else {
           fallbackRef.current?.resetBearing();
         }
       },
       zoomIn: () => {
-        if (!hasMapboxToken) {
+        if (!mapboxReady) {
           fallbackRef.current?.zoomIn?.();
         }
       },
       zoomOut: () => {
-        if (!hasMapboxToken) {
+        if (!mapboxReady) {
           fallbackRef.current?.zoomOut?.();
         }
       },
     }));
 
-    if (!hasMapboxToken) {
+    if (!mapboxReady || !mapbox) {
       return (
         <HomeMapFallback
           ref={fallbackRef}
@@ -85,7 +101,7 @@ export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
     });
 
     return (
-      <Mapbox.MapView
+      <mapbox.MapView
         style={StyleSheet.absoluteFill}
         styleURL={env.mapboxStyleUrl}
         scaleBarEnabled={false}
@@ -97,7 +113,7 @@ export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
         scrollEnabled
         zoomEnabled
       >
-        <Mapbox.Camera
+        <mapbox.Camera
           ref={cameraRef}
           centerCoordinate={[center.longitude, center.latitude]}
           zoomLevel={CITY_ZOOM_LEVEL}
@@ -107,24 +123,24 @@ export const HomeMapView = forwardRef<HomeMapHandle, HomeMapViewProps>(
         />
 
         {filteredIssues.map((issue) => (
-          <Mapbox.MarkerView
+          <mapbox.MarkerView
             key={issue.id}
             id={issue.id}
             coordinate={[center.longitude + issue.offset.lng, center.latitude + issue.offset.lat]}
             anchor={{ x: 0.5, y: 1 }}
           >
             <IssueMarker issue={issue} onPress={() => onIssuePress?.(issue.id)} />
-          </Mapbox.MarkerView>
+          </mapbox.MarkerView>
         ))}
 
-        <Mapbox.MarkerView
+        <mapbox.MarkerView
           id="player"
           coordinate={[center.longitude, center.latitude]}
           anchor={{ x: 0.5, y: 0.5 }}
         >
           <PlayerMarker />
-        </Mapbox.MarkerView>
-      </Mapbox.MapView>
+        </mapbox.MarkerView>
+      </mapbox.MapView>
     );
   }
 );
