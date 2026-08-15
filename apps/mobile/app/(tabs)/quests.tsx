@@ -1,5 +1,14 @@
-import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,6 +38,58 @@ function formatStatus(status: string): string {
 }
 
 type ActionState = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string };
+
+/** Staggered fade + slide + scale entrance, a touch slower than the
+ * Community Quests cards in the EcoBot screen for a calmer cascade here. */
+function AnimatedCard({
+  index,
+  style,
+  children,
+}: {
+  index: number;
+  style?: object;
+  children: React.ReactNode;
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(18)).current;
+  const scaleAnim = useRef(new Animated.Value(0.97)).current;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 460,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: false,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }, 130 + index * 110);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <Animated.View
+      style={[style, { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 
 export default function QuestsScreen() {
   const insets = useSafeAreaInsets();
@@ -112,19 +173,22 @@ export default function QuestsScreen() {
           </Text>
         )}
 
-        {myQuests.map((quest) => (
-          <MyQuestCard
-            key={quest.quest_id}
-            quest={quest}
-            startState={startStateByQuestId[quest.quest_id] ?? { kind: "idle" }}
-            onStartQuest={() => startQuest(quest.quest_id)}
-            onSubmitProof={() => openSubmitProof(quest)}
-          />
+        {myQuests.map((quest, index) => (
+          <AnimatedCard key={quest.quest_id} index={index}>
+            <MyQuestCard
+              quest={quest}
+              startState={startStateByQuestId[quest.quest_id] ?? { kind: "idle" }}
+              onStartQuest={() => startQuest(quest.quest_id)}
+              onSubmitProof={() => openSubmitProof(quest)}
+            />
+          </AnimatedCard>
         ))}
 
         <Text style={[styles.sectionTitle, styles.sectionTitleSpacing]}>Quests</Text>
-        {mockQuests.map((quest) => (
-          <QuestCard key={quest.id} quest={quest} />
+        {mockQuests.map((quest, index) => (
+          <AnimatedCard key={quest.id} index={index}>
+            <QuestCard quest={quest} />
+          </AnimatedCard>
         ))}
       </ScrollView>
     </View>

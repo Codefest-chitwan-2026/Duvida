@@ -566,19 +566,63 @@ function TypingWaveIndicator() {
 
 function IssueCard({
   issue,
+  index,
   questState,
   onGenerateQuest,
   onAcceptQuest,
 }: {
   issue: CommunityIssue;
+  index: number;
   questState: QuestCardState;
   onGenerateQuest: () => void;
   onAcceptQuest: () => void;
 }) {
   const location = [issue.address, issue.city].filter(Boolean).join(", ") || "Location unavailable";
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(18)).current;
+  const scaleAnim = useRef(new Animated.Value(0.97)).current;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 380,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: false,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }, 100 + index * 90);
+
+    return () => clearTimeout(timer);
+    // Runs once on mount only — this card shouldn't replay its entrance
+    // every time questState changes (e.g. after generating a quest).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <View style={styles.issueCard}>
+    <Animated.View
+      style={[
+        styles.issueCard,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+        },
+      ]}
+    >
       <View style={styles.issueHeaderRow}>
         <View style={styles.issueHeaderCopy}>
           <Text style={styles.issueEyebrow}>Community issue</Text>
@@ -649,7 +693,7 @@ function IssueCard({
       {questState.status === "error" ? (
         <Text style={styles.inlineError}>{questState.message}</Text>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -998,12 +1042,13 @@ export default function SustainabilityAdvisorScreen() {
               </View>
             ) : null}
 
-            {issues.map((issue) => {
+            {issues.map((issue, index) => {
               const questState = questStateByIssueId[issue.id] ?? { status: "idle" as const };
               return (
                 <IssueCard
                   key={issue.id}
                   issue={issue}
+                  index={index}
                   questState={questState}
                   onGenerateQuest={() => void generateQuest(issue.id)}
                   onAcceptQuest={() => {
