@@ -45,7 +45,7 @@ export default function MediaScreen() {
     [addMedia]
   );
 
-  const { openPicker } = useMediaPicker(handlePicked);
+  const { takePhoto, recordVideo } = useMediaPicker(handlePicked);
 
   const photoItems = useMemo(
     () => formData.media.filter((item) => item.mediaType === 'image'),
@@ -86,14 +86,14 @@ export default function MediaScreen() {
 
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={openPicker}
+              onPress={takePhoto}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Add photos"
-              accessibilityHint="Opens options to take a photo or choose media from your device"
+              accessibilityLabel="Take photo"
+              accessibilityHint="Opens your camera to take a photo"
             >
               <MaterialCommunityIcons name="camera" size={21} color={colors.primaryGreen} />
-              <Text style={styles.uploadButtonLabel}>Add Photos</Text>
+              <Text style={styles.uploadButtonLabel}>Take Photo</Text>
             </TouchableOpacity>
 
             {photoItems.length > 0 && (
@@ -124,7 +124,7 @@ export default function MediaScreen() {
                 {additionalPhotoCount > 0 && (
                   <TouchableOpacity
                     style={[styles.photoPreview, styles.morePhotos]}
-                    onPress={openPicker}
+                    onPress={takePhoto}
                     activeOpacity={0.8}
                     accessibilityRole="button"
                     accessibilityLabel={`${additionalPhotoCount} more photos`}
@@ -144,18 +144,18 @@ export default function MediaScreen() {
 
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={openPicker}
+              onPress={recordVideo}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Add video"
-              accessibilityHint="Opens options to record or choose media from your device"
+              accessibilityLabel="Record video"
+              accessibilityHint="Opens your camera to record a video"
             >
               <MaterialCommunityIcons
                 name="video"
                 size={22}
                 color={colors.primaryGreen}
               />
-              <Text style={styles.uploadButtonLabel}>Add Video</Text>
+              <Text style={styles.uploadButtonLabel}>Record Video</Text>
             </TouchableOpacity>
 
             {videoItems.length > 0 && (
