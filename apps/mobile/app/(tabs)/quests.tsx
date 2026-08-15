@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,10 +7,57 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PhotoPlaceholder } from "@/components/PhotoPlaceholder";
 import { ProgressRing } from "@/components/ProgressRing";
 import { mockQuests, type Quest } from "@/features/quests/mockQuests";
+import { env } from "@/lib/env";
 import { colors } from "@/theme/colors";
+
+type MyQuest = {
+  quest_id: string;
+  title: string | null;
+  description: string | null;
+  quest_type: string | null;
+  points_reward: number | null;
+  participation_status: string;
+  progress_percent: number;
+  points_awarded: number;
+};
+
+function capitalize(value: string): string {
+  return value.length > 0 ? value[0].toUpperCase() + value.slice(1) : value;
+}
 
 export default function QuestsScreen() {
   const insets = useSafeAreaInsets();
+  const [myQuests, setMyQuests] = useState<MyQuest[]>([]);
+  const [myQuestsLoading, setMyQuestsLoading] = useState(false);
+  const [myQuestsError, setMyQuestsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchMyQuests = async () => {
+      setMyQuestsLoading(true);
+      setMyQuestsError(null);
+      try {
+        const response = await fetch(`${env.advisorApiUrl}/quests/my`);
+        if (!response.ok) {
+          throw new Error(`Request failed (${response.status})`);
+        }
+        const data: MyQuest[] = await response.json();
+        if (!cancelled) setMyQuests(data);
+      } catch (err) {
+        if (!cancelled) {
+          setMyQuestsError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+        }
+      } finally {
+        if (!cancelled) setMyQuestsLoading(false);
+      }
+    };
+
+    fetchMyQuests();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <View style={styles.screen}>
@@ -17,10 +65,56 @@ export default function QuestsScreen() {
         <Text style={styles.headerTitle}>Quests</Text>
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 132 }]}>
+        <Text style={styles.sectionTitle}>My Quests</Text>
+
+        {myQuestsLoading && (
+          <View style={styles.myQuestsStatusRow}>
+            <ActivityIndicator size="small" color={colors.brandGreenDark} />
+            <Text style={styles.myQuestsStatusText}>Loading your quests...</Text>
+          </View>
+        )}
+
+        {myQuestsError && <Text style={styles.myQuestsErrorText}>{myQuestsError}</Text>}
+
+        {!myQuestsLoading && !myQuestsError && myQuests.length === 0 && (
+          <Text style={styles.myQuestsStatusText}>
+            You haven't accepted any quests yet. Generate one from a community issue to see it here.
+          </Text>
+        )}
+
+        {myQuests.map((quest) => (
+          <MyQuestCard key={quest.quest_id} quest={quest} />
+        ))}
+
+        <Text style={[styles.sectionTitle, styles.sectionTitleSpacing]}>Quests</Text>
         {mockQuests.map((quest) => (
           <QuestCard key={quest.id} quest={quest} />
         ))}
       </ScrollView>
+    </View>
+  );
+}
+
+function MyQuestCard({ quest }: { quest: MyQuest }) {
+  return (
+    <View style={styles.myQuestCard}>
+      <Text style={styles.myQuestLabel}>Quest title</Text>
+      <Text style={styles.myQuestTitle}>{quest.title ?? "Untitled quest"}</Text>
+
+      <View style={styles.myQuestRow}>
+        <View style={styles.myQuestRowItem}>
+          <Text style={styles.myQuestLabel}>Status</Text>
+          <Text style={styles.myQuestValue}>{capitalize(quest.participation_status)}</Text>
+        </View>
+        <View style={styles.myQuestRowItem}>
+          <Text style={styles.myQuestLabel}>Progress</Text>
+          <Text style={styles.myQuestValue}>{quest.progress_percent}%</Text>
+        </View>
+        <View style={styles.myQuestRowItem}>
+          <Text style={styles.myQuestLabel}>Reward</Text>
+          <Text style={styles.myQuestValue}>{quest.points_reward ?? 0} points</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -59,6 +153,60 @@ function QuestCard({ quest }: { quest: Quest }) {
 }
 
 const styles = StyleSheet.create({
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  sectionTitleSpacing: {
+    marginTop: 8,
+  },
+  myQuestsStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  myQuestsStatusText: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+  },
+  myQuestsErrorText: {
+    fontSize: 12.5,
+    color: "#DC2626",
+    marginBottom: 8,
+  },
+  myQuestCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 12,
+  },
+  myQuestLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  myQuestTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    marginBottom: 10,
+  },
+  myQuestRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  myQuestRowItem: {
+    flex: 1,
+  },
+  myQuestValue: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.textPrimary,
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.card,

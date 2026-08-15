@@ -38,3 +38,14 @@ class GeneratedQuest(BaseModel):
     status: str = "active"
     points_reward: int
     community_id: str
+
+
+class MyQuest(BaseModel):
+    quest_id: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    quest_type: Optional[str] = None
+    points_reward: Optional[int] = None
+    participation_status: str
+    progress_percent: int
+    points_awarded: int

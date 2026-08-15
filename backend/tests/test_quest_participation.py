@@ -13,6 +13,7 @@ from app.quest_participation import (
     AlreadyJoined,
     QuestNotFound,
     accept_quest,
+    fetch_my_quests,
 )
 
 client = TestClient(app)
@@ -115,4 +116,84 @@ def test_accept_quest_endpoint_already_joined():
 def test_accept_quest_endpoint_supabase_error():
     with patch("app.main.accept_quest", side_effect=RuntimeError("boom")):
         response = client.post(f"/quests/{QUEST_ID}/accept")
+        assert response.status_code == 503
+
+
+def test_fetch_my_quests_maps_joined_rows():
+    mock_client = MagicMock()
+    mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+        {
+            "status": "joined",
+            "progress_percent": 0,
+            "points_awarded": 0,
+            "quests": {
+                "id": QUEST_ID,
+                "title": "Park Entrance Litter Cleanup",
+                "description": "Clean it up.",
+                "quest_type": "cleanup",
+                "points_reward": 30,
+            },
+        }
+    ]
+
+    with patch("app.quest_participation.get_client", return_value=mock_client):
+        result = fetch_my_quests()
+
+    mock_client.table.assert_called_once_with("quest_participants")
+    mock_client.table.return_value.select.return_value.eq.assert_called_once_with(
+        "user_id", DEFAULT_USER_ID
+    )
+    assert result == [
+        {
+            "quest_id": QUEST_ID,
+            "title": "Park Entrance Litter Cleanup",
+            "description": "Clean it up.",
+            "quest_type": "cleanup",
+            "points_reward": 30,
+            "participation_status": "joined",
+            "progress_percent": 0,
+            "points_awarded": 0,
+        }
+    ]
+
+
+def test_fetch_my_quests_empty_when_none_joined():
+    mock_client = MagicMock()
+    mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+
+    with patch("app.quest_participation.get_client", return_value=mock_client):
+        result = fetch_my_quests()
+
+    assert result == []
+
+
+def test_my_quests_endpoint_success():
+    quests = [
+        {
+            "quest_id": QUEST_ID,
+            "title": "Some quest",
+            "description": "A quest",
+            "quest_type": "cleanup",
+            "points_reward": 30,
+            "participation_status": "joined",
+            "progress_percent": 0,
+            "points_awarded": 0,
+        }
+    ]
+    with patch("app.main.fetch_my_quests", return_value=quests):
+        response = client.get("/quests/my")
+        assert response.status_code == 200
+        assert response.json() == quests
+
+
+def test_my_quests_endpoint_empty_list():
+    with patch("app.main.fetch_my_quests", return_value=[]):
+        response = client.get("/quests/my")
+        assert response.status_code == 200
+        assert response.json() == []
+
+
+def test_my_quests_endpoint_supabase_error():
+    with patch("app.main.fetch_my_quests", side_effect=RuntimeError("boom")):
+        response = client.get("/quests/my")
         assert response.status_code == 503

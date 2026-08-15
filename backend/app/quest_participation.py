@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from .supabase_client import get_client
 
@@ -55,3 +55,31 @@ def accept_quest(quest_id: str) -> dict:
     }
     response = get_client().table("quest_participants").insert(row).execute()
     return response.data[0]
+
+
+def fetch_my_quests() -> List[dict]:
+    """Quests the current user has joined, most recently generated quest fields included."""
+    response = (
+        get_client()
+        .table("quest_participants")
+        .select("status,progress_percent,points_awarded,quests(id,title,description,quest_type,points_reward)")
+        .eq("user_id", DEFAULT_USER_ID)
+        .execute()
+    )
+
+    results: List[dict] = []
+    for row in response.data:
+        quest = row.get("quests") or {}
+        results.append(
+            {
+                "quest_id": quest.get("id"),
+                "title": quest.get("title"),
+                "description": quest.get("description"),
+                "quest_type": quest.get("quest_type"),
+                "points_reward": quest.get("points_reward"),
+                "participation_status": row["status"],
+                "progress_percent": row["progress_percent"],
+                "points_awarded": row["points_awarded"],
+            }
+        )
+    return results

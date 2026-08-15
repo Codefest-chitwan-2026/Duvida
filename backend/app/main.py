@@ -12,9 +12,9 @@ from .document_loader import load_knowledge_text
 from .gemini_client import ask_ecobot
 from .local_responses import match_local_response
 from .quest_generator import InvalidGeneratedQuest, generate_quest_for_issue, insert_quest
-from .quest_participation import AlreadyJoined, QuestNotFound, accept_quest
+from .quest_participation import AlreadyJoined, QuestNotFound, accept_quest, fetch_my_quests
 from .retrieval import format_retrieved_chunks, retrieve
-from .schemas import ChatReply, ChatRequest, CommunityIssue
+from .schemas import ChatReply, ChatRequest, CommunityIssue, MyQuest
 
 app = FastAPI(title="Sustainability Advisor API")
 
@@ -48,6 +48,14 @@ def chat(request: ChatRequest):
 def community_issues():
     try:
         return fetch_active_issues()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+
+@app.get("/quests/my", response_model=List[MyQuest])
+def my_quests():
+    try:
+        return fetch_my_quests()
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
 
