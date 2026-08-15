@@ -198,11 +198,22 @@ function ModeCard({
   );
 }
 
-function UserBubble({ time, text }: { time: string; text: string }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(14)).current;
+function UserBubble({
+  time,
+  text,
+  isLatest = false,
+}: {
+  time: string;
+  text: string;
+  isLatest?: boolean;
+}) {
+  const hasAnimatedRef = useRef(!isLatest);
+  const fadeAnim = useRef(new Animated.Value(hasAnimatedRef.current ? 1 : 0)).current;
+  const slideAnim = useRef(new Animated.Value(hasAnimatedRef.current ? 0 : 12)).current;
 
   useEffect(() => {
+    if (hasAnimatedRef.current) return;
+
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -216,7 +227,9 @@ function UserBubble({ time, text }: { time: string; text: string }) {
         tension: 50,
         useNativeDriver: false,
       }),
-    ]).start();
+    ]).start(() => {
+      hasAnimatedRef.current = true;
+    });
   }, [fadeAnim, slideAnim]);
 
   return (
@@ -244,26 +257,41 @@ function UserBubble({ time, text }: { time: string; text: string }) {
 
 function TypewriterText({
   text,
+  isLatest = false,
   onUpdate,
 }: {
   text: string;
+  isLatest?: boolean;
   onUpdate?: () => void;
 }) {
-  const [displayedLength, setDisplayedLength] = useState(0);
+  const hasStreamedRef = useRef(!isLatest);
+  const [displayedLength, setDisplayedLength] = useState(
+    hasStreamedRef.current ? text.length : 0
+  );
 
   useEffect(() => {
+    if (hasStreamedRef.current) {
+      setDisplayedLength(text.length);
+      return;
+    }
+
     let current = 0;
     const total = text.length;
-    // Smooth character & word stream rate
-    const step = Math.max(1, Math.floor(total / 35));
+
     const timer = setInterval(() => {
-      current = Math.min(current + step, total);
+      // Natural conversational cadence: 2 characters per 25ms with punctuation pauses
+      const char = text[current] || "";
+      const isPause = [".", "!", "?", "🌱", "\n"].includes(char);
+
+      current = Math.min(current + (isPause ? 1 : 2), total);
       setDisplayedLength(current);
       onUpdate?.();
+
       if (current >= total) {
+        hasStreamedRef.current = true;
         clearInterval(timer);
       }
-    }, 16);
+    }, 25);
 
     return () => clearInterval(timer);
   }, [text, onUpdate]);
@@ -280,17 +308,22 @@ function TypewriterText({
 
 function StaggeredListItem({
   index,
+  isLatest = false,
   children,
   onPress,
 }: {
   index: number;
+  isLatest?: boolean;
   children: React.ReactNode;
   onPress?: () => void;
 }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(14)).current;
+  const hasAnimatedRef = useRef(!isLatest);
+  const fadeAnim = useRef(new Animated.Value(hasAnimatedRef.current ? 1 : 0)).current;
+  const slideAnim = useRef(new Animated.Value(hasAnimatedRef.current ? 0 : 14)).current;
 
   useEffect(() => {
+    if (hasAnimatedRef.current) return;
+
     const timer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -305,8 +338,10 @@ function StaggeredListItem({
           tension: 45,
           useNativeDriver: false,
         }),
-      ]).start();
-    }, 180 + index * 95);
+      ]).start(() => {
+        hasAnimatedRef.current = true;
+      });
+    }, 180 + index * 120);
 
     return () => clearTimeout(timer);
   }, [index, fadeAnim, slideAnim]);
@@ -344,19 +379,24 @@ function StaggeredListItem({
 function BotMessage({
   time,
   body,
+  isLatest = false,
   onStreamUpdate,
   onSelectItem,
 }: {
   time: string;
   body: BotBody;
+  isLatest?: boolean;
   onStreamUpdate?: () => void;
   onSelectItem?: (item: string) => void;
 }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(18)).current;
-  const scaleAnim = useRef(new Animated.Value(0.96)).current;
+  const hasAnimatedRef = useRef(!isLatest);
+  const fadeAnim = useRef(new Animated.Value(hasAnimatedRef.current ? 1 : 0)).current;
+  const slideAnim = useRef(new Animated.Value(hasAnimatedRef.current ? 0 : 16)).current;
+  const scaleAnim = useRef(new Animated.Value(hasAnimatedRef.current ? 1 : 0.97)).current;
 
   useEffect(() => {
+    if (hasAnimatedRef.current) return;
+
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -376,7 +416,9 @@ function BotMessage({
         tension: 40,
         useNativeDriver: false,
       }),
-    ]).start();
+    ]).start(() => {
+      hasAnimatedRef.current = true;
+    });
   }, [fadeAnim, slideAnim, scaleAnim]);
 
   return (
@@ -395,7 +437,7 @@ function BotMessage({
         <View style={styles.botCard}>
           {body.kind === "text" ? (
             <>
-              <TypewriterText text={body.text} onUpdate={onStreamUpdate} />
+              <TypewriterText text={body.text} isLatest={isLatest} onUpdate={onStreamUpdate} />
               {body.quests?.map((quest) => (
                 <View key={`${quest.title}-${quest.description}`} style={styles.questSuggestion}>
                   <View style={styles.questIcon}>
@@ -412,11 +454,12 @@ function BotMessage({
 
           {body.kind === "numbered" ? (
             <>
-              <TypewriterText text={body.intro} onUpdate={onStreamUpdate} />
+              <TypewriterText text={body.intro} isLatest={isLatest} onUpdate={onStreamUpdate} />
               {body.items.map((item, index) => (
                 <StaggeredListItem
                   key={`${index}-${item}`}
                   index={index}
+                  isLatest={isLatest}
                   onPress={() => onSelectItem?.(item)}
                 >
                   <View style={styles.listIndex}>
@@ -435,7 +478,7 @@ function BotMessage({
               ))}
               {body.outro ? (
                 <View style={{ marginTop: 6 }}>
-                  <TypewriterText text={body.outro} onUpdate={onStreamUpdate} />
+                  <TypewriterText text={body.outro} isLatest={isLatest} onUpdate={onStreamUpdate} />
                 </View>
               ) : null}
             </>
@@ -443,16 +486,16 @@ function BotMessage({
 
           {body.kind === "bulleted" ? (
             <>
-              <TypewriterText text={body.intro} onUpdate={onStreamUpdate} />
+              <TypewriterText text={body.intro} isLatest={isLatest} onUpdate={onStreamUpdate} />
               {body.items.map((item, index) => (
-                <StaggeredListItem key={`${index}-${item.text}`} index={index}>
+                <StaggeredListItem key={`${index}-${item.text}`} index={index} isLatest={isLatest}>
                   <Text style={styles.bulletEmoji}>{item.emoji}</Text>
                   <Text style={styles.listItemText}>{item.text}</Text>
                 </StaggeredListItem>
               ))}
               {body.outro ? (
                 <View style={{ marginTop: 6 }}>
-                  <TypewriterText text={body.outro} onUpdate={onStreamUpdate} />
+                  <TypewriterText text={body.outro} isLatest={isLatest} onUpdate={onStreamUpdate} />
                 </View>
               ) : null}
             </>
@@ -864,19 +907,26 @@ export default function SustainabilityAdvisorScreen() {
               ))}
             </View>
 
-            {messages.map((message) =>
-              message.sender === "user" ? (
-                <UserBubble key={message.id} time={message.time} text={message.text} />
+            {messages.map((message, index) => {
+              const isLatest = index === messages.length - 1;
+              return message.sender === "user" ? (
+                <UserBubble
+                  key={message.id}
+                  time={message.time}
+                  text={message.text}
+                  isLatest={isLatest}
+                />
               ) : (
                 <BotMessage
                   key={message.id}
                   time={message.time}
                   body={message.body}
+                  isLatest={isLatest}
                   onStreamUpdate={() => scrollRef.current?.scrollToEnd({ animated: true })}
                   onSelectItem={(topic) => void sendMessage(`How can I help with ${topic}?`)}
                 />
-              )
-            )}
+              );
+            })}
 
             <View style={styles.chipRow}>
               {followUpReplies.map((reply) => (

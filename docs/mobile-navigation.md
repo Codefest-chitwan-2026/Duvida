@@ -114,11 +114,14 @@ Logout clears the Supabase session and returns to `(auth)/welcome` — blocked o
 
 ## Mobile vs. web
 
-The two clients are already separate apps in the monorepo, each talking to the same Supabase backend:
+The citizen app and web tools are separate workspace sections that share the same backend contracts:
 
 - `apps/mobile` — this Expo Router citizen app.
-- `apps/admin` — the Next.js authority dashboard (this is the "web dashboard" from the spec; the actual folder is named `admin`, not `web`). It owns report totals/verified/pending/resolved, category/severity breakdowns, hotspots, evidence review, resolution trends, and quest/impact analytics. Nothing from `apps/admin` belongs inside the mobile navigator, and nothing here should get pulled into it.
+- `apps/web/admin` — the Next.js authority operations dashboard.
+- `apps/web/dashboard` — the Next.js municipal analytics dashboard.
+
+Nothing from `apps/web` belongs inside the mobile navigator, and mobile screens should remain in `apps/mobile`.
 
 ## What this doc is (and isn't)
 
-This is a planning/reference doc only — no navigation code was generated from it. When a screen moves from ⬜/🚧 to done, update its row here so the doc keeps matching reality. See also [architecture.md](architecture.md) for the backend data flow and [roadmap.md](roadmap.md) for build sequencing (this doc assumes the reporting-loop-first order roadmap.md already lays out).
+This is a planning/reference document only; it does not generate navigation code. Update the status table whenever a screen is completed or moved.
