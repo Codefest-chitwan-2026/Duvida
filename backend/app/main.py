@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .community_issues import fetch_active_issues, fetch_issue_by_id
 from .document_loader import load_knowledge_text
-from .gemini_client import ask_ecobot
+from .llm_client import ask_ecobot
 from .local_responses import match_local_response
 from .quest_generator import InvalidGeneratedQuest, generate_quest_for_issue, insert_quest
 from .quest_participation import (
@@ -92,7 +92,7 @@ def generate_quest(issue_id: str):
     try:
         quest = generate_quest_for_issue(issue)
     except InvalidGeneratedQuest as exc:
-        raise HTTPException(status_code=502, detail=f"Gemini returned an invalid quest: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"AI returned an invalid quest: {exc}") from exc
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Quest generation failed") from exc
 

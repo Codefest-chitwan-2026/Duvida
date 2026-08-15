@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { env } from "@/lib/env";
@@ -655,6 +655,7 @@ function IssueCard({
 
 export default function SustainabilityAdvisorScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [screenMode, setScreenMode] = useState<ScreenMode>("choose");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -800,6 +801,7 @@ export default function SustainabilityAdvisorScreen() {
         if (state?.status !== "success") return current;
         return { ...current, [issueId]: { ...state, acceptance: { kind: "accepted" } } };
       });
+      router.push("/quests");
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : "Could not accept quest.";
       setQuestStateByIssueId((current) => {

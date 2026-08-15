@@ -7,8 +7,11 @@ from .supabase_client import get_client
 # analysis — no sign-in flow, no session/user-id source anywhere). Same
 # placeholder pattern as DEFAULT_COMMUNITY_ID in quest_generator.py: a real
 # profile id, standing in for "the current authenticated user" until real
-# auth is wired up.
-DEFAULT_USER_ID = "cc7f660b-1d6b-4ca9-8363-cea9e3681356"
+# auth is wired up. profiles.id has an FK to auth.users.id (enforced), so
+# this can't just be any UUID — it was minted via
+# report_submission.register_guest_reporter(), the same admin-API flow used
+# for guest report submitters.
+DEFAULT_USER_ID = "2efd6a4e-dbca-48a3-abc4-33f576db1b5a"
 
 # Created manually in the Supabase dashboard, not by this code.
 PROOF_BUCKET = "quest-proofs"

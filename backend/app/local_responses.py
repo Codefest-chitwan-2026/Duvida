@@ -1,4 +1,4 @@
-"""Deterministic, offline answers for simple/common questions — no Gemini call.
+"""Deterministic, offline answers for simple/common questions — no LLM call.
 
 This module is just the matching engine. Rules and content live in
 backend/data/sustainability_local_responses.json — edit that file to add or
@@ -7,7 +7,7 @@ change canned answers, no code changes needed.
 Only intents with mode == "static" are matched here. Intents with
 mode == "guided" (multi-step conversations, see the JSON's "guided_flows")
 are recognized in the data but intentionally NOT actionable yet, so they
-fall through to the RAG -> Gemini flow in main.py like anything else unmatched.
+fall through to the RAG -> LLM flow in main.py like anything else unmatched.
 """
 
 import json

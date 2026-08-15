@@ -30,9 +30,9 @@ SAMPLE_ISSUE = {
 }
 
 
-def _fake_gemini_response(quest: GeneratedQuest):
+def _fake_llm_response(quest: GeneratedQuest):
     response = MagicMock()
-    response.parsed = quest
+    response.choices[0].message.content = quest.model_dump_json()
     return response
 
 
@@ -59,9 +59,9 @@ def test_generate_quest_for_issue_success():
         community_id="some-id-the-model-made-up",
     )
     with patch("app.quest_generator.retrieve", return_value=[]) as mock_retrieve, patch(
-        "app.quest_generator.get_gemini_client"
+        "app.quest_generator.get_llm_client"
     ) as mock_get_client:
-        mock_get_client.return_value.models.generate_content.return_value = _fake_gemini_response(valid_quest)
+        mock_get_client.return_value.chat.completions.create.return_value = _fake_llm_response(valid_quest)
 
         result = generate_quest_for_issue(SAMPLE_ISSUE)
 
@@ -81,9 +81,9 @@ def test_generate_quest_for_issue_rejects_invalid_quest_type(bad_quest_type):
         points_reward=10, community_id=DEFAULT_COMMUNITY_ID,
     )
     with patch("app.quest_generator.retrieve", return_value=[]), patch(
-        "app.quest_generator.get_gemini_client"
+        "app.quest_generator.get_llm_client"
     ) as mock_get_client:
-        mock_get_client.return_value.models.generate_content.return_value = _fake_gemini_response(quest)
+        mock_get_client.return_value.chat.completions.create.return_value = _fake_llm_response(quest)
         with pytest.raises(InvalidGeneratedQuest):
             generate_quest_for_issue(SAMPLE_ISSUE)
 
@@ -95,9 +95,9 @@ def test_generate_quest_for_issue_rejects_invalid_status(bad_status):
         points_reward=10, community_id=DEFAULT_COMMUNITY_ID,
     )
     with patch("app.quest_generator.retrieve", return_value=[]), patch(
-        "app.quest_generator.get_gemini_client"
+        "app.quest_generator.get_llm_client"
     ) as mock_get_client:
-        mock_get_client.return_value.models.generate_content.return_value = _fake_gemini_response(quest)
+        mock_get_client.return_value.chat.completions.create.return_value = _fake_llm_response(quest)
         with pytest.raises(InvalidGeneratedQuest):
             generate_quest_for_issue(SAMPLE_ISSUE)
 
