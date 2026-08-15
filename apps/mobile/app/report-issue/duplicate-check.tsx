@@ -8,6 +8,7 @@ import { useIssueForm } from '../../hooks/useIssueForm';
 import { colors } from '../../constants/colors';
 import { spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Mock "existing issue" this build checks new reports against — stands in
@@ -35,17 +36,50 @@ export default function DuplicateCheckScreen() {
     formData.category === MOCK_EXISTING_ISSUE.category && isNearby(formData.location, MOCK_EXISTING_ISSUE.location);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setChecking(false);
-      router.replace(
-        isDuplicate
-          ? { pathname: '/report-issue/existing-issue', params: { existingIssueId: MOCK_EXISTING_ISSUE.issueId } }
-          : { pathname: '/report-issue/success', params: { mode: 'new' } }
-      );
-    }, 900);
+    let isMounted = true;
 
-    return () => clearTimeout(timer);
-  }, [isDuplicate, router]);
+    async function processSubmission() {
+      if (!isDuplicate) {
+        try {
+          const submittedTimestamp = formData.submittedAt || new Date().toISOString();
+          await supabase.from('issues').insert({
+            code: formData.issueId,
+            title: formData.description?.slice(0, 60) || `${formData.category} report`,
+            description: formData.description,
+            category: formData.category,
+            severity: formData.severity,
+            latitude: formData.location.latitude,
+            longitude: formData.location.longitude,
+            address: formData.location.address,
+            city: 'Kathmandu',
+            status: 'pending',
+            created_at: submittedTimestamp,
+            updated_at: submittedTimestamp,
+          });
+        } catch (err) {
+          console.warn('Supabase issue submission error (non-fatal):', err);
+        }
+      }
+
+      if (isMounted) {
+        setChecking(false);
+        router.replace(
+          isDuplicate
+            ? { pathname: '/report-issue/existing-issue', params: { existingIssueId: MOCK_EXISTING_ISSUE.issueId } }
+            : { pathname: '/report-issue/success', params: { mode: 'new' } }
+        );
+      }
+    }
+
+    const timer = setTimeout(() => {
+      void processSubmission();
+    }, 850);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [isDuplicate, router, formData]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>

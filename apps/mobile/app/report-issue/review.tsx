@@ -109,25 +109,14 @@ function EvidenceThumbnail({ item }: { item: MediaItem }) {
 
 export default function ReviewScreen() {
   const router = useRouter();
-  const { formData } = useIssueForm();
+  const { formData, setSubmittedTime } = useIssueForm();
   const [copied, setCopied] = useState(false);
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const visibleEvidenceCount =
-    formData.media.length > MAX_VISIBLE_EVIDENCE ? 3 : MAX_VISIBLE_EVIDENCE;
-  const visibleEvidence = useMemo(
-    () => formData.media.slice(0, visibleEvidenceCount),
-    [formData.media, visibleEvidenceCount]
-  );
-  const additionalEvidenceCount = formData.media.length - visibleEvidence.length;
-  const photoCount = formData.media.filter((item) => item.mediaType === 'image').length;
-  const videoCount = formData.media.filter((item) => item.mediaType === 'video').length;
-  const evidenceSummary = [
-    photoCount > 0 ? `${photoCount} ${photoCount === 1 ? 'Photo' : 'Photos'}` : null,
-    videoCount > 0 ? `${videoCount} ${videoCount === 1 ? 'Video' : 'Videos'}` : null,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const evidenceCount = formData.media.length;
+  const additionalEvidenceCount = Math.max(0, evidenceCount - MAX_VISIBLE_EVIDENCE);
+  const evidenceSummary = evidenceCount > 0 ? `${evidenceCount} item${evidenceCount > 1 ? 's' : ''}` : '';
+  const visibleEvidence = formData.media.slice(0, MAX_VISIBLE_EVIDENCE);
 
   useEffect(() => {
     return () => {
@@ -148,6 +137,7 @@ export default function ReviewScreen() {
   };
 
   const handleSubmit = () => {
+    setSubmittedTime(new Date().toISOString());
     router.push('/report-issue/duplicate-check');
   };
 
@@ -268,9 +258,23 @@ export default function ReviewScreen() {
               iconColor={colors.primaryGreen}
               label="Evidence"
               onEdit={() => router.push('/report-issue/media')}
-              isLast
             >
               <Text style={styles.summaryValue}>{evidenceSummary || 'No evidence added'}</Text>
+            </SummaryRow>
+
+            <SummaryRow
+              icon="clock-outline"
+              iconColor={colors.primaryGreen}
+              label="Submission Time"
+              onEdit={() => {}}
+              isLast
+            >
+              <Text style={styles.summaryValue}>
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · Today
+              </Text>
+              <Text style={styles.summarySubValue}>
+                {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              </Text>
             </SummaryRow>
           </View>
 
