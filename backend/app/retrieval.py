@@ -16,13 +16,14 @@ def retrieve(query: str, top_k: int = 5) -> List[RetrievedChunk]:
         return []
 
     collection = get_collection()
-    result_count = min(top_k, collection.count())
-    if result_count == 0:
+    collection_count = collection.count()
+    if collection_count == 0:
         return []
 
+    query_embedding = embed_texts([query])[0]
     results = collection.query(
-        query_embeddings=[embed_texts([query])[0]],
-        n_results=result_count,
+        query_embeddings=[query_embedding],
+        n_results=min(top_k, collection_count),
         include=["documents", "metadatas", "distances"],
     )
 
@@ -42,6 +43,7 @@ def retrieve(query: str, top_k: int = 5) -> List[RetrievedChunk]:
 
 
 def format_retrieved_chunks(chunks: List[RetrievedChunk]) -> str:
+    """Render retrieved chunks as a knowledge string, source metadata included."""
     return "\n\n".join(
         f"[Source: {chunk['source']}, chunk {chunk['chunk_index']}]\n{chunk['text']}"
         for chunk in chunks

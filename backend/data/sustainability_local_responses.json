@@ -1,0 +1,154 @@
+{
+  "intents": [
+    {
+      "id": "water_advice",
+      "category": "water",
+      "sdgs": [6,11,12,13],
+      "triggers": [
+        "save water",
+        "water saving",
+        "water conservation",
+        "reduce water waste",
+        "water usage",
+        "how can i save water",
+        "water tips"
+      ],
+      "mode": "static",
+      "answer": "💧 Water Conservation\n\nWater is a valuable resource that supports communities, agriculture, and ecosystems. Many people waste water unknowingly through daily habits such as long showers, leaking taps, and unnecessary usage.\n\nYou can reduce water waste by:\n• Fixing leaking taps and pipes\n• Taking shorter showers\n• Turning off taps when water is not needed\n• Reusing water where possible\n• Using water carefully during cleaning and gardening\n\nSaving water protects freshwater resources, helps communities prepare for shortages, and supports a more sustainable future.\n\n🌍 Related SDGs:\nSDG 6 - Clean Water and Sanitation\nSDG 11 - Sustainable Cities and Communities\nSDG 12 - Responsible Consumption\nSDG 13 - Climate Action"
+    },
+
+    {
+      "id": "waste_advice",
+      "category": "waste",
+      "sdgs": [11,12,13],
+      "triggers": [
+        "reduce waste",
+        "recycling",
+        "waste management",
+        "plastic waste",
+        "separate waste",
+        "how can i recycle"
+      ],
+      "mode": "static",
+      "answer": "♻️ Waste Management\n\nWaste management is important because poorly managed waste can pollute land, water, and air while affecting public health. Small changes in daily habits can significantly reduce the amount of waste reaching landfills.\n\nYou can manage waste better by:\n• Separating recyclable, organic, and general waste\n• Reducing single-use plastics\n• Reusing items before throwing them away\n• Composting organic waste when possible\n• Choosing products with less packaging\n\nResponsible waste management keeps communities cleaner, reduces pollution, and supports a circular economy where resources are reused instead of wasted.\n\n🌍 Related SDGs:\nSDG 11 - Sustainable Cities and Communities\nSDG 12 - Responsible Consumption and Production\nSDG 13 - Climate Action"
+    },
+
+    {
+      "id": "greenery_advice",
+      "category": "greenery",
+      "sdgs": [11,13,15],
+      "triggers": [
+        "plant trees",
+        "green spaces",
+        "biodiversity",
+        "protect nature",
+        "trees",
+        "greenery"
+      ],
+      "mode": "static",
+      "answer": "🌱 Greenery & Biodiversity\n\nPlants, trees, and natural ecosystems play an important role in maintaining clean air, supporting wildlife, reducing heat, and improving the quality of life in communities.\n\nYou can support greenery by:\n• Planting and caring for suitable local plants\n• Protecting existing trees and green areas\n• Avoiding activities that damage natural habitats\n• Supporting biodiversity around your community\n• Creating small green spaces at home or school\n\nProtecting nature helps communities become more resilient to climate change and preserves ecosystems for future generations.\n\n🌍 Related SDGs:\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action\nSDG 15 - Life on Land"
+    },
+
+    {
+      "id": "energy_advice",
+      "category": "energy",
+      "sdgs": [7,11,12,13],
+      "triggers": [
+        "save electricity",
+        "energy saving",
+        "reduce energy",
+        "electricity usage",
+        "renewable energy"
+      ],
+      "mode": "static",
+      "answer": "⚡ Energy Efficiency\n\nEnergy consumption affects both household costs and the environment. Reducing unnecessary energy use helps lower emissions and supports cleaner energy systems.\n\nYou can save energy by:\n• Turning off unused lights and appliances\n• Using energy-efficient bulbs and devices\n• Avoiding unnecessary standby power usage\n• Using natural light when possible\n• Supporting renewable energy solutions\n\nEnergy efficiency reduces environmental impact while helping communities move toward cleaner and more sustainable energy use.\n\n🌍 Related SDGs:\nSDG 7 - Affordable and Clean Energy\nSDG 11 - Sustainable Cities and Communities\nSDG 12 - Responsible Consumption\nSDG 13 - Climate Action"
+    },
+
+    {
+      "id": "transport_advice",
+      "category": "transport",
+      "sdgs": [11,13],
+      "triggers": [
+        "sustainable transport",
+        "low carbon transport",
+        "reduce transport emissions",
+        "walking",
+        "cycling",
+        "travel sustainably",
+        "travel sustainability",
+        "green transport",
+        "eco friendly transport"
+      ],
+      "mode": "static",
+      "answer": "🚶 Sustainable Transport\n\nTransportation is a major contributor to greenhouse gas emissions. Choosing cleaner travel options can improve air quality and create healthier communities.\n\nYou can make transport more sustainable by:\n• Walking or cycling for short distances\n• Using public transportation when available\n• Sharing rides when possible\n• Reducing unnecessary vehicle trips\n• Supporting cleaner transportation options\n\nSustainable transport reduces emissions, improves public health, and helps cities become more livable.\n\n🌍 Related SDGs:\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action"
+    },
+
+    {
+      "id": "community_advice",
+      "category": "community",
+      "sdgs": [10,11,13],
+      "triggers": [
+        "community action",
+        "help community",
+        "cleanup",
+        "citizen participation",
+        "environmental action",
+        "help my community",
+        "community support",
+        "community sustainability"
+      ],
+      "mode": "static",
+      "answer": "🏘️ Community Action\n\nSustainability cannot be achieved by individuals alone. Communities working together can identify local problems, create solutions, and build a cleaner and more resilient environment.\n\nYou can contribute by:\n• Joining local cleanup activities\n• Reporting environmental problems\n• Helping maintain public spaces\n• Sharing sustainability awareness\n• Supporting community improvement projects\n\nWhen citizens participate actively, small actions become collective impact and create stronger sustainable communities.\n\n🌍 Related SDGs:\nSDG 10 - Reduced Inequalities\nSDG 11 - Sustainable Cities and Communities\nSDG 13 - Climate Action"
+    },
+
+    {
+      "id": "sdg_advice_menu",
+      "category": "community",
+      "sdgs": [11,12,13],
+      "triggers": [
+        "i need sdg advice"
+      ],
+      "mode": "static",
+      "answer": "Sure! 🌱 What would you like advice on?"
+    },
+
+    {
+      "id": "sdg_11",
+      "category": "community",
+      "sdgs": [11],
+      "triggers": [
+        "what is sdg 11",
+        "sdg 11",
+        "sustainable cities and communities"
+      ],
+      "mode": "static",
+      "answer": "SDG 11 is Sustainable Cities and Communities. It focuses on making human settlements inclusive, safe, resilient, and sustainable."
+    },
+
+    {
+      "id": "sdg_12",
+      "category": "waste",
+      "sdgs": [12],
+      "triggers": [
+        "what is sdg 12",
+        "sdg 12",
+        "responsible consumption and production"
+      ],
+      "mode": "static",
+      "answer": "SDG 12 is Responsible Consumption and Production. It focuses on using resources more efficiently, reducing waste, and improving how goods are produced and consumed."
+    },
+
+    {
+      "id": "sdg_13",
+      "category": "community",
+      "sdgs": [13],
+      "triggers": [
+        "what is sdg 13",
+        "sdg 13",
+        "climate action"
+      ],
+      "mode": "static",
+      "answer": "SDG 13 is Climate Action. It calls for urgent action to address climate change and strengthen resilience to climate-related impacts."
+    }
+  ]
+}

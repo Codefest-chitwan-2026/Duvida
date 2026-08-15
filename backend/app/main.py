@@ -1,25 +1,22 @@
-from contextlib import asynccontextmanager
+from typing import List
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-from .document_loader import load_knowledge_text
-from .gemini_client import ask_ecobot
-from .retrieval import format_retrieved_chunks, retrieve
-from .schemas import ChatReply, ChatRequest
-from .vector_store import build_index, get_collection
 
 load_dotenv()
 
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    build_index()
-    yield
+from .community_issues import fetch_active_issues, fetch_issue_by_id
+from .document_loader import load_knowledge_text
+from .gemini_client import ask_ecobot
+from .local_responses import match_local_response
+from .quest_generator import InvalidGeneratedQuest, generate_quest_for_issue, insert_quest
+from .quest_participation import AlreadyJoined, QuestNotFound, accept_quest
+from .retrieval import format_retrieved_chunks, retrieve
+from .schemas import ChatReply, ChatRequest, CommunityIssue
 
-
-app = FastAPI(title="Sustainability Advisor API", lifespan=lifespan)
+app = FastAPI(title="Sustainability Advisor API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,17 +25,63 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_knowledge_text = load_knowledge_text()
+
 
 @app.get("/health")
 def health():
-    return {
-        "status": "ok",
-        "knowledge_chars": len(load_knowledge_text()),
-        "indexed_chunks": get_collection().count(),
-    }
+    return {"status": "ok", "knowledge_chars": len(_knowledge_text)}
 
 
 @app.post("/chat", response_model=ChatReply)
 def chat(request: ChatRequest):
-    knowledge = format_retrieved_chunks(retrieve(request.message, top_k=5))
+    local_reply = match_local_response(request.message)
+    if local_reply is not None:
+        return local_reply
+
+    retrieved_chunks = retrieve(request.message, top_k=5)
+    knowledge = format_retrieved_chunks(retrieved_chunks)
     return ask_ecobot(request.message, knowledge)
+
+
+@app.get("/community/issues", response_model=List[CommunityIssue])
+def community_issues():
+    try:
+        return fetch_active_issues()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+
+@app.post("/community/issues/{issue_id}/generate-quest")
+def generate_quest(issue_id: str):
+    try:
+        issue = fetch_issue_by_id(issue_id)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+    if issue is None:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    try:
+        quest = generate_quest_for_issue(issue)
+    except InvalidGeneratedQuest as exc:
+        raise HTTPException(status_code=502, detail=f"Gemini returned an invalid quest: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Quest generation failed") from exc
+
+    try:
+        return insert_quest(quest)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Could not save the generated quest") from exc
+
+
+@app.post("/quests/{quest_id}/accept")
+def accept_quest_endpoint(quest_id: str):
+    try:
+        return accept_quest(quest_id)
+    except QuestNotFound as exc:
+        raise HTTPException(status_code=404, detail="Quest not found") from exc
+    except AlreadyJoined as exc:
+        raise HTTPException(status_code=409, detail="Already joined this quest") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc

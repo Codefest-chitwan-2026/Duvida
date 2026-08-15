@@ -1,286 +1,340 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "@/theme/colors";
 
-type MaterialIconName = keyof typeof MaterialCommunityIcons.glyphMap;
+type IconName = keyof typeof Ionicons.glyphMap;
 
 type WalletAction = {
   label: string;
-  icon: MaterialIconName;
+  icon: IconName;
+  key: "history" | "send" | "redeem" | "top-up";
 };
 
-type Summary = {
+type WalletStat = {
   label: string;
   value: string;
-  icon: MaterialIconName;
+  icon: IconName;
   color: string;
 };
 
 type Transaction = {
+  id: string;
   title: string;
   detail: string;
   amount: string;
   date: string;
-  icon: MaterialIconName;
+  icon: IconName;
   color: string;
   background: string;
+  positive: boolean;
 };
 
 const ACTIONS: WalletAction[] = [
-  { label: "History", icon: "history" },
-  { label: "Send", icon: "send" },
-  { label: "Redeem", icon: "gift-outline" },
-  { label: "Top Up", icon: "plus-circle-outline" },
+  { key: "history", label: "History", icon: "time-outline" },
+  { key: "send", label: "Send", icon: "paper-plane-outline" },
+  { key: "redeem", label: "Redeem", icon: "gift-outline" },
+  { key: "top-up", label: "Top Up", icon: "add-circle-outline" },
 ];
 
-const SUMMARIES: Summary[] = [
-  { label: "Earned", value: "2,250", icon: "arrow-down", color: "#06863C" },
-  { label: "Spent", value: "-400", icon: "arrow-up", color: "#EF2727" },
+const STATS: WalletStat[] = [
+  { label: "Earned", value: "2,250", icon: "arrow-down", color: "#079447" },
+  { label: "Spent", value: "-400", icon: "arrow-up", color: "#DC2626" },
   { label: "Redeemed", value: "12", icon: "gift", color: "#2563EB" },
-  { label: "Pending", value: "24", icon: "clock", color: "#9B51D6" },
+  { label: "Pending", value: "24", icon: "time", color: "#8B5CF6" },
 ];
 
 const TRANSACTIONS: Transaction[] = [
   {
+    id: "clean-park",
     title: "Quest Completed",
     detail: "Clean the Park",
     amount: "+100",
     date: "Today, 10:30 AM",
-    icon: "check-bold",
-    color: "#069447",
-    background: "#DDF5E6",
+    icon: "checkmark",
+    color: "#079447",
+    background: "#DCFCE7",
+    positive: true,
   },
   {
+    id: "report-verified",
     title: "Report Verified",
     detail: "Pothole on MG Road",
     amount: "+50",
     date: "Yesterday, 4:15 PM",
-    icon: "shield-check",
-    color: "#2474DE",
-    background: "#E2EDFD",
+    icon: "shield-checkmark",
+    color: "#2563EB",
+    background: "#DBEAFE",
+    positive: true,
   },
   {
+    id: "tree-plantation",
     title: "Quest Completed",
     detail: "Tree Plantation Challenge",
     amount: "+120",
     date: "2 days ago",
-    icon: "check-bold",
-    color: "#069447",
-    background: "#DDF5E6",
+    icon: "checkmark",
+    color: "#079447",
+    background: "#DCFCE7",
+    positive: true,
   },
   {
+    id: "gift-card",
     title: "Voucher Redeemed",
-    detail: "Amazon Gift Card",
+    detail: "Community Store Voucher",
     amount: "-300",
     date: "3 days ago",
     icon: "gift",
-    color: "#F97316",
-    background: "#FFF0DC",
+    color: "#EA580C",
+    background: "#FFEDD5",
+    positive: false,
   },
   {
+    id: "top-up",
     title: "Top Up",
     detail: "Purchased 1,000 Vouchers",
     amount: "+1,000",
     date: "5 days ago",
-    icon: "plus",
-    color: "#9452D3",
-    background: "#EFE2FC",
+    icon: "add",
+    color: "#8B5CF6",
+    background: "#F3E8FF",
+    positive: true,
   },
 ];
 
-const cardShadow = {
-  shadowColor: "#15321F",
-  shadowOpacity: 0.09,
-  shadowRadius: 13,
-  shadowOffset: { width: 0, height: 5 },
-  elevation: 4,
-};
-
 export function WalletScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const scrollRef = useRef<ScrollView>(null);
+  const transactionOffset = useRef(0);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const compact = width < 370;
 
-  const showComingSoon = (feature: string) => {
-    Alert.alert(feature, `${feature} will be available soon.`);
+  const handleAction = (action: WalletAction["key"]) => {
+    if (action === "history") {
+      setShowAllTransactions(true);
+      scrollRef.current?.scrollTo({ y: transactionOffset.current, animated: true });
+      return;
+    }
+
+    const messages = {
+      send: "Secure voucher transfers will be available once wallet verification is connected.",
+      redeem: "The rewards marketplace is being prepared for your community.",
+      "top-up": "Voucher top-ups will be available after payment setup is complete.",
+    } as const;
+
+    Alert.alert(action === "top-up" ? "Top Up" : action[0].toUpperCase() + action.slice(1), messages[action]);
   };
+
+  const visibleTransactions = showAllTransactions ? TRANSACTIONS : TRANSACTIONS.slice(0, 3);
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="dark" />
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 130 },
+          { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 128 },
         ]}
       >
-        <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Back to map"
-            hitSlop={10}
-            onPress={() => router.navigate("/")}
-            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
-          >
-            <Ionicons name="arrow-back" size={29} color={colors.textPrimary} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Voucher Wallet</Text>
-          <Pressable
-            accessibilityLabel="Voucher wallet help"
-            hitSlop={10}
-            onPress={() => showComingSoon("Voucher wallet help")}
-            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
-          >
-            <Ionicons name="help-circle-outline" size={30} color={colors.textPrimary} />
-          </Pressable>
-        </View>
+        <View style={styles.pageContent}>
+          <View style={styles.header}>
+            <Pressable
+              accessibilityLabel="Back to map"
+              hitSlop={10}
+              onPress={() => router.navigate("/")}
+              style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
+            >
+              <Ionicons name="arrow-back" size={26} color={colors.textPrimary} />
+            </Pressable>
+            <Text style={styles.headerTitle}>Voucher Wallet</Text>
+            <Pressable
+              accessibilityLabel="Wallet help"
+              hitSlop={10}
+              onPress={() =>
+                Alert.alert(
+                  "Everest Vouchers",
+                  "Earn vouchers by completing quests and submitting verified community reports. Redeem them for community rewards."
+                )
+              }
+              style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
+            >
+              <Ionicons name="help-circle-outline" size={27} color={colors.textPrimary} />
+            </Pressable>
+          </View>
 
-        <View style={styles.heroCard}>
-          <View style={styles.heroGlow} />
-          <View style={styles.balanceRow}>
+          <View style={[styles.balanceCard, compact && styles.balanceCardCompact]}>
+            <View style={styles.balanceGlow} />
+            <View style={styles.walletArtwork} pointerEvents="none">
+              <View style={[styles.decorativeCoin, styles.coinOne]}>
+                <Ionicons name="leaf" size={18} color="#FFF2A8" />
+              </View>
+              <View style={[styles.decorativeCoin, styles.coinTwo]}>
+                <Ionicons name="leaf" size={14} color="#FFF2A8" />
+              </View>
+              <MaterialCommunityIcons
+                name="wallet"
+                size={compact ? 104 : 132}
+                color="rgba(17, 132, 68, 0.55)"
+              />
+            </View>
+
             <View style={styles.balanceCopy}>
               <Text style={styles.balanceLabel}>My Balance</Text>
-              <View style={styles.balanceValueRow}>
-                <Coin size={48} />
-                <Text style={styles.balanceValue}>2,450</Text>
+              <View style={styles.balanceRow}>
+                <View style={styles.tokenCoin}>
+                  <Ionicons name="leaf" size={22} color="#FFF5B7" />
+                </View>
+                <Text style={[styles.balanceValue, compact && styles.balanceValueCompact]}>
+                  2,450
+                </Text>
               </View>
               <Text style={styles.balanceUnit}>Everest Vouchers</Text>
             </View>
-            <WalletIllustration />
+
+            <View style={styles.actionRow}>
+              {ACTIONS.map((action) => (
+                <ActionButton
+                  key={action.key}
+                  action={action}
+                  compact={compact}
+                  onPress={() => handleAction(action.key)}
+                />
+              ))}
+            </View>
           </View>
 
-          <View style={styles.actionsRow}>
-            {ACTIONS.map((action) => (
-              <Pressable
-                key={action.label}
-                accessibilityRole="button"
-                onPress={() => showComingSoon(action.label)}
-                style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
-              >
-                <MaterialCommunityIcons
-                  name={action.icon}
-                  size={34}
-                  color="#0DC45A"
-                />
-                <Text style={styles.actionLabel}>{action.label}</Text>
-              </Pressable>
+          <View style={[styles.card, styles.statsCard]}>
+            {STATS.map((stat, index) => (
+              <View key={stat.label} style={[styles.stat, index > 0 && styles.statDivider]}>
+                <View style={styles.statValueRow}>
+                  <Ionicons name={stat.icon} size={compact ? 18 : 21} color={stat.color} />
+                  <Text style={[styles.statValue, compact && styles.statValueCompact]}>
+                    {stat.value}
+                  </Text>
+                </View>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </View>
             ))}
           </View>
-        </View>
 
-        <View style={styles.summaryCard}>
-          {SUMMARIES.map((summary, index) => (
-            <View
-              key={summary.label}
-              style={[styles.summaryItem, index > 0 && styles.summaryDivider]}
-            >
-              <View style={styles.summaryValueRow}>
-                <MaterialCommunityIcons name={summary.icon} size={23} color={summary.color} />
-                <Text style={styles.summaryValue}>{summary.value}</Text>
-              </View>
-              <Text style={styles.summaryLabel}>{summary.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          <Pressable onPress={() => showComingSoon("Transaction history")} hitSlop={8}>
-            <Text style={styles.viewAll}>View All</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.transactionsCard}>
-          {TRANSACTIONS.map((transaction, index) => (
-            <TransactionRow
-              key={`${transaction.title}-${transaction.date}`}
-              transaction={transaction}
-              showDivider={index > 0}
-            />
-          ))}
-        </View>
-
-        <View style={styles.earnBanner}>
-          <View style={styles.earnIcon}>
-            <MaterialCommunityIcons name="shield-star" size={35} color="#F6C439" />
-            <Ionicons name="leaf" size={17} color="#D8F9B7" style={styles.earnLeaf} />
-          </View>
-          <View style={styles.earnCopy}>
-            <Text style={styles.earnTitle}>Earn more vouchers!</Text>
-            <Text style={styles.earnText}>
-              Complete quests, verify reports, and take sustainability challenges to earn
-              vouchers.
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => router.navigate("/quests")}
-            style={({ pressed }) => [styles.exploreButton, pressed && styles.pressed]}
+          <View
+            style={styles.transactionsSection}
+            onLayout={(event) => {
+              transactionOffset.current = event.nativeEvent.layout.y;
+            }}
           >
-            <Text style={styles.exploreText}>Explore Quests</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.card} />
-          </Pressable>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Transactions</Text>
+              <Pressable
+                hitSlop={8}
+                onPress={() => setShowAllTransactions((current) => !current)}
+                style={({ pressed }) => pressed && styles.pressed}
+              >
+                <Text style={styles.viewAll}>{showAllTransactions ? "View Less" : "View All"}</Text>
+              </Pressable>
+            </View>
+
+            <View style={[styles.card, styles.transactionCard]}>
+              {visibleTransactions.map((transaction, index) => (
+                <TransactionRow
+                  key={transaction.id}
+                  transaction={transaction}
+                  divided={index > 0}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.earnCard}>
+            <View style={styles.earnIcon}>
+              <Ionicons name="leaf" size={28} color={colors.card} />
+            </View>
+            <View style={styles.earnCopy}>
+              <Text style={styles.earnTitle}>Earn more vouchers!</Text>
+              <Text style={styles.earnText}>
+                Complete quests, verify reports, and take sustainability challenges.
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => router.navigate("/quests")}
+              style={({ pressed }) => [
+                styles.exploreButton,
+                compact && styles.exploreButtonCompact,
+                pressed && styles.exploreButtonPressed,
+              ]}
+            >
+              <Text style={styles.exploreButtonText}>{compact ? "Explore" : "Explore Quests"}</Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.card} />
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </View>
   );
 }
 
-function Coin({ size }: { size: number }) {
+function ActionButton({
+  action,
+  compact,
+  onPress,
+}: {
+  action: WalletAction;
+  compact: boolean;
+  onPress: () => void;
+}) {
   return (
-    <View
-      style={[
-        styles.coin,
-        { width: size, height: size, borderRadius: size / 2, borderWidth: Math.max(2, size / 14) },
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.actionButton,
+        compact && styles.actionButtonCompact,
+        pressed && styles.actionButtonPressed,
       ]}
     >
-      <Ionicons name="leaf" size={size * 0.48} color="#FFF3A5" />
-    </View>
-  );
-}
-
-function WalletIllustration() {
-  return (
-    <View style={styles.walletArt} pointerEvents="none">
-      <View style={styles.walletBackCard} />
-      <View style={styles.walletBody}>
-        <View style={styles.walletStitch} />
-        <View style={styles.walletClasp}>
-          <View style={styles.walletButton} />
-        </View>
-      </View>
-      <View style={styles.artCoinTop}>
-        <Coin size={46} />
-      </View>
-      <View style={styles.artCoinRight}>
-        <Coin size={55} />
-      </View>
-      <View style={styles.artCoinFront}>
-        <Coin size={48} />
-      </View>
-      <Ionicons name="leaf" size={27} color="#65A30D" style={styles.artLeafLeft} />
-      <Ionicons name="leaf" size={24} color="#4D9B0A" style={styles.artLeafRight} />
-    </View>
+      <Ionicons name={action.icon} size={compact ? 24 : 29} color="#18C462" />
+      <Text style={[styles.actionLabel, compact && styles.actionLabelCompact]}>{action.label}</Text>
+    </Pressable>
   );
 }
 
 function TransactionRow({
   transaction,
-  showDivider,
+  divided,
 }: {
   transaction: Transaction;
-  showDivider: boolean;
+  divided: boolean;
 }) {
-  const amountColor = transaction.amount.startsWith("-") ? "#E51F1F" : "#07883C";
-
   return (
-    <View style={[styles.transactionRow, showDivider && styles.transactionDivider]}>
+    <Pressable
+      onPress={() =>
+        Alert.alert(
+          transaction.title,
+          `${transaction.detail}\n${transaction.amount} Everest Vouchers\n${transaction.date}`
+        )
+      }
+      style={({ pressed }) => [
+        styles.transactionRow,
+        divided && styles.transactionDivider,
+        pressed && styles.transactionPressed,
+      ]}
+    >
       <View style={[styles.transactionIcon, { backgroundColor: transaction.background }]}>
-        <View style={[styles.transactionIconInner, { backgroundColor: transaction.color }]}>
-          <MaterialCommunityIcons name={transaction.icon} size={20} color={colors.card} />
-        </View>
+        <Ionicons name={transaction.icon} size={22} color={transaction.color} />
       </View>
       <View style={styles.transactionCopy}>
         <Text style={styles.transactionTitle}>{transaction.title}</Text>
@@ -289,12 +343,27 @@ function TransactionRow({
         </Text>
       </View>
       <View style={styles.transactionMeta}>
-        <Text style={[styles.transactionAmount, { color: amountColor }]}>{transaction.amount}</Text>
+        <Text
+          style={[
+            styles.transactionAmount,
+            { color: transaction.positive ? "#079447" : colors.severityHigh },
+          ]}
+        >
+          {transaction.amount}
+        </Text>
         <Text style={styles.transactionDate}>{transaction.date}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
+
+const cardShadow = {
+  shadowColor: "#183728",
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 3,
+};
 
 const styles = StyleSheet.create({
   screen: {
@@ -302,17 +371,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAF8",
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    flexGrow: 1,
+    paddingHorizontal: 14,
   },
-  pressed: {
-    opacity: 0.58,
+  pageContent: {
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    gap: 15,
   },
   header: {
-    height: 58,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
+    paddingHorizontal: 2,
   },
   headerButton: {
     width: 42,
@@ -322,266 +395,228 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 23,
     fontWeight: "800",
     color: colors.textPrimary,
   },
-  heroCard: {
-    minHeight: 328,
+  pressed: {
+    opacity: 0.58,
+  },
+  balanceCard: {
+    minHeight: 348,
+    padding: 24,
+    paddingBottom: 112,
     overflow: "hidden",
     borderRadius: 24,
-    padding: 16,
-    backgroundColor: "#004331",
-    ...cardShadow,
+    backgroundColor: "#063E2E",
   },
-  heroGlow: {
+  balanceCardCompact: {
+    minHeight: 328,
+    paddingHorizontal: 18,
+  },
+  balanceGlow: {
     position: "absolute",
-    top: -100,
-    right: -30,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: "rgba(9, 106, 70, 0.52)",
+    top: -110,
+    right: -70,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: "rgba(21, 128, 61, 0.18)",
   },
-  balanceRow: {
-    minHeight: 180,
-    flexDirection: "row",
+  walletArtwork: {
+    position: "absolute",
+    top: 40,
+    right: 18,
+    width: 170,
+    height: 155,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  decorativeCoin: {
+    position: "absolute",
+    zIndex: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#FFE066",
+    backgroundColor: "#F5B301",
+    shadowColor: "#000",
+    shadowOpacity: 0.22,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  coinOne: {
+    top: 0,
+    left: 18,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  coinTwo: {
+    top: 39,
+    right: 5,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   balanceCopy: {
-    flex: 1,
-    zIndex: 2,
-    paddingTop: 8,
-    paddingLeft: 4,
+    zIndex: 3,
+    alignSelf: "flex-start",
   },
   balanceLabel: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#B7C8C4",
+    color: "rgba(255,255,255,0.68)",
   },
-  balanceValueRow: {
+  balanceRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginTop: 12,
+    marginTop: 13,
+  },
+  tokenCoin: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#FFE066",
+    backgroundColor: "#F5B301",
   },
   balanceValue: {
-    fontSize: 40,
-    lineHeight: 47,
+    fontSize: 47,
+    lineHeight: 54,
     fontWeight: "800",
     letterSpacing: 0.5,
     color: colors.card,
   },
+  balanceValueCompact: {
+    fontSize: 39,
+  },
   balanceUnit: {
-    marginTop: 4,
-    marginLeft: 60,
+    marginTop: 5,
+    marginLeft: 62,
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "500",
     color: colors.card,
   },
-  coin: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFB700",
-    borderColor: "#FFD658",
-    shadowColor: "#000",
-    shadowOpacity: 0.16,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  walletArt: {
-    width: 170,
-    height: 177,
-  },
-  walletBackCard: {
+  actionRow: {
     position: "absolute",
-    right: 8,
-    bottom: 35,
-    width: 126,
-    height: 91,
-    borderRadius: 15,
-    borderWidth: 3,
-    borderColor: "#466E42",
-    backgroundColor: "#173E2B",
-    transform: [{ rotate: "-5deg" }],
-  },
-  walletBody: {
-    position: "absolute",
-    right: 2,
-    bottom: 18,
-    width: 145,
-    height: 91,
-    overflow: "hidden",
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: "#5D8245",
-    backgroundColor: "#16452F",
-  },
-  walletStitch: {
-    position: "absolute",
-    left: 9,
-    right: 9,
-    top: 8,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: "#C5A643",
-  },
-  walletClasp: {
-    position: "absolute",
-    right: -3,
-    top: 33,
-    width: 49,
-    height: 29,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#517B3B",
-    backgroundColor: "#0D3425",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    paddingLeft: 7,
-  },
-  walletButton: {
-    width: 13,
-    height: 13,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: "#E5D8A5",
-    backgroundColor: "#9B8A55",
-  },
-  artCoinTop: {
-    position: "absolute",
-    top: 1,
-    left: 42,
-  },
-  artCoinRight: {
-    position: "absolute",
-    top: 42,
-    right: 24,
-  },
-  artCoinFront: {
-    position: "absolute",
-    left: 20,
-    bottom: 8,
-  },
-  artLeafLeft: {
-    position: "absolute",
-    top: 55,
-    left: 0,
-    transform: [{ rotate: "-45deg" }],
-  },
-  artLeafRight: {
-    position: "absolute",
-    top: 15,
-    right: 2,
-    transform: [{ rotate: "34deg" }],
-  },
-  actionsRow: {
+    left: 14,
+    right: 14,
+    bottom: 16,
     flexDirection: "row",
     gap: 8,
   },
   actionButton: {
     flex: 1,
-    minWidth: 0,
-    height: 108,
-    borderRadius: 18,
+    minHeight: 84,
     alignItems: "center",
     justifyContent: "center",
-    gap: 9,
-    backgroundColor: "rgba(255, 255, 255, 0.07)",
+    gap: 7,
+    borderRadius: 17,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.025)",
+    borderColor: "rgba(255,255,255,0.04)",
+    backgroundColor: "rgba(255,255,255,0.075)",
   },
-  actionPressed: {
-    backgroundColor: "rgba(255, 255, 255, 0.14)",
+  actionButtonCompact: {
+    minHeight: 76,
+  },
+  actionButtonPressed: {
+    backgroundColor: "rgba(24,196,98,0.2)",
+    transform: [{ scale: 0.96 }],
   },
   actionLabel: {
     fontSize: 13,
     fontWeight: "700",
     color: colors.card,
   },
-  summaryCard: {
-    minHeight: 108,
-    marginTop: 14,
-    flexDirection: "row",
-    alignItems: "center",
+  actionLabelCompact: {
+    fontSize: 11,
+  },
+  card: {
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#EEF1EE",
+    borderColor: "#EDF0ED",
     backgroundColor: colors.card,
     ...cardShadow,
   },
-  summaryItem: {
+  statsCard: {
+    flexDirection: "row",
+    paddingVertical: 17,
+  },
+  stat: {
     flex: 1,
     minWidth: 0,
     alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
-  summaryDivider: {
+  statDivider: {
     borderLeftWidth: 1,
     borderLeftColor: colors.border,
   },
-  summaryValueRow: {
+  statValueRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 6,
   },
-  summaryValue: {
+  statValue: {
     fontSize: 17,
     fontWeight: "800",
     color: colors.textPrimary,
   },
-  summaryLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#526078",
+  statValueCompact: {
+    fontSize: 14,
+  },
+  statLabel: {
+    marginTop: 7,
+    fontSize: 11,
+    textAlign: "center",
+    color: colors.textMuted,
+  },
+  transactionsSection: {
+    gap: 10,
   },
   sectionHeader: {
-    marginTop: 25,
-    marginBottom: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 2,
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: "800",
     color: colors.textPrimary,
   },
   viewAll: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-    color: "#07883C",
+    color: "#07833D",
   },
-  transactionsCard: {
+  transactionCard: {
     overflow: "hidden",
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E1E7E2",
-    backgroundColor: colors.card,
+    paddingHorizontal: 14,
   },
   transactionRow: {
-    minHeight: 78,
+    minHeight: 76,
     flexDirection: "row",
     alignItems: "center",
     gap: 11,
+    paddingVertical: 11,
   },
   transactionDivider: {
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  transactionIcon: {
-    width: 49,
-    height: 49,
-    borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
+  transactionPressed: {
+    opacity: 0.58,
   },
-  transactionIconInner: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  transactionIcon: {
+    width: 43,
+    height: 43,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -595,45 +630,42 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   transactionDetail: {
-    marginTop: 4,
-    fontSize: 12,
-    color: "#526078",
+    marginTop: 3,
+    fontSize: 11,
+    color: colors.textMuted,
   },
   transactionMeta: {
     alignItems: "flex-end",
-    paddingLeft: 3,
+    paddingLeft: 5,
   },
   transactionAmount: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
   },
   transactionDate: {
-    marginTop: 6,
-    fontSize: 11,
-    color: "#526078",
+    marginTop: 5,
+    fontSize: 9,
+    color: colors.textMuted,
   },
-  earnBanner: {
-    marginTop: 14,
-    minHeight: 112,
+  earnCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 14,
+    padding: 16,
     borderRadius: 20,
-    backgroundColor: "#E7F6ED",
+    borderWidth: 1,
+    borderColor: "#CDEDD7",
+    backgroundColor: "#EAF7EE",
   },
   earnIcon: {
-    width: 55,
-    height: 62,
+    width: 52,
+    height: 58,
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0C7139",
     borderWidth: 3,
-    borderColor: "#A9D68A",
-  },
-  earnLeaf: {
-    position: "absolute",
+    borderColor: "#F3D34A",
+    backgroundColor: "#07833D",
   },
   earnCopy: {
     flex: 1,
@@ -645,22 +677,29 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   earnText: {
-    marginTop: 5,
+    marginTop: 3,
     fontSize: 11,
     lineHeight: 16,
     color: "#526078",
   },
   exploreButton: {
-    minHeight: 46,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
-    paddingHorizontal: 13,
-    borderRadius: 13,
-    backgroundColor: "#03913F",
+    gap: 4,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    backgroundColor: "#07833D",
   },
-  exploreText: {
+  exploreButtonCompact: {
+    paddingHorizontal: 10,
+  },
+  exploreButtonPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.97 }],
+  },
+  exploreButtonText: {
     fontSize: 12,
     fontWeight: "800",
     color: colors.card,
