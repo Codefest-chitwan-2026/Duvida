@@ -76,14 +76,15 @@ export const MOCK_ISSUES: IssueRow[] = [
   },
 ];
 
-// `storage_path` is left null in mock data (no real files uploaded in this
-// UI-only phase) — the detail view falls back to a placeholder tile, same
-// pattern as RecentReports' optional `imageUrl`.
+// `storage_path` points at static placeholder photos under
+// `public/quest-photos/` so the verification detail view has something to
+// render in this UI-only phase — swap for real Supabase Storage URLs later,
+// same pattern as RecentReports' optional `imageUrl`.
 export const MOCK_ISSUE_MEDIA: IssueMediaRow[] = [
-  { id: "med-2037-1", issue_id: "iss-2037", uploaded_by: "usr-binayak", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Dumped waste at park entrance", created_at: "2026-08-12T09:11:00Z" },
-  { id: "med-2040-1", issue_id: "iss-2040", uploaded_by: "usr-maya", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Leaking pipe on municipal road", created_at: "2026-08-13T06:41:00Z" },
-  { id: "med-2038-1", issue_id: "iss-2038", uploaded_by: "usr-rohan", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Bare embankment, no tree cover", created_at: "2026-08-11T14:21:00Z" },
-  { id: "med-2041-1", issue_id: "iss-2041", uploaded_by: "usr-sita", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Garbage near market entrance", created_at: "2026-08-14T08:06:00Z" },
+  { id: "med-2037-1", issue_id: "iss-2037", uploaded_by: "usr-binayak", media_type: "image", storage_path: "/quest-photos/before.png", thumbnail_path: null, caption: "Dumped waste at park entrance", created_at: "2026-08-12T09:11:00Z" },
+  { id: "med-2040-1", issue_id: "iss-2040", uploaded_by: "usr-maya", media_type: "image", storage_path: "/quest-photos/before.png", thumbnail_path: null, caption: "Leaking pipe on municipal road", created_at: "2026-08-13T06:41:00Z" },
+  { id: "med-2038-1", issue_id: "iss-2038", uploaded_by: "usr-rohan", media_type: "image", storage_path: "/quest-photos/before.png", thumbnail_path: null, caption: "Bare embankment, no tree cover", created_at: "2026-08-11T14:21:00Z" },
+  { id: "med-2041-1", issue_id: "iss-2041", uploaded_by: "usr-sita", media_type: "image", storage_path: "/quest-photos/before.png", thumbnail_path: null, caption: "Garbage near market entrance", created_at: "2026-08-14T08:06:00Z" },
 ];
 
 export const MOCK_QUESTS: QuestRow[] = [
@@ -164,7 +165,7 @@ export const MOCK_QUEST_PARTICIPANTS: QuestParticipantRow[] = [
     user_id: "usr-ashwin",
     status: "submitted",
     progress_percent: 80,
-    proof_media_path: "",
+    proof_media_path: "/quest-photos/after.png",
     points_awarded: null,
     joined_at: "2026-08-12T11:00:00Z",
     completed_at: null,
@@ -176,7 +177,7 @@ export const MOCK_QUEST_PARTICIPANTS: QuestParticipantRow[] = [
     user_id: "usr-binayak",
     status: "submitted",
     progress_percent: 80,
-    proof_media_path: "",
+    proof_media_path: "/quest-photos/after.png",
     points_awarded: null,
     joined_at: "2026-08-13T08:00:00Z",
     completed_at: null,
@@ -188,7 +189,7 @@ export const MOCK_QUEST_PARTICIPANTS: QuestParticipantRow[] = [
     user_id: "usr-maya",
     status: "submitted",
     progress_percent: 80,
-    proof_media_path: "",
+    proof_media_path: "/quest-photos/after.png",
     points_awarded: null,
     joined_at: "2026-08-13T09:30:00Z",
     completed_at: null,
@@ -212,7 +213,7 @@ export const MOCK_QUEST_PARTICIPANTS: QuestParticipantRow[] = [
     user_id: "usr-sita",
     status: "completed",
     progress_percent: 100,
-    proof_media_path: "",
+    proof_media_path: "/quest-photos/after.png",
     points_awarded: 25,
     joined_at: "2026-08-14T09:30:00Z",
     completed_at: "2026-08-14T20:00:00Z",

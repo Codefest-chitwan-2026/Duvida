@@ -1,35 +1,37 @@
-import { Award, Check, ImageOff, MapPin, User, X } from "lucide-react";
+import { AlertCircle, Award, Check, Clock3, ImageOff, MapPin, ShieldCheck, UserRound, X } from "lucide-react";
 import type { QuestVerificationItem } from "@/lib/data/quests-types";
 
-function ProofTile({ label, src }: { label: string; src: string | null }) {
+function humanizeQuestType(value: string) {
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function ProofTile({ label, helper, src, tone }: { label: string; helper: string; src: string | null; tone: "before" | "after" }) {
   return (
-    <div style={{ flex: 1, minWidth: "180px" }}>
-      <p style={{ fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--text-muted)", marginBottom: "6px" }}>
-        {label}
-      </p>
-      <div
-        style={{
-          aspectRatio: "4 / 3",
-          borderRadius: "var(--radius-md)",
-          backgroundColor: "var(--bg-surface-muted)",
-          border: "1px solid var(--border-color)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-        }}
-      >
+    <figure className="quest-proof-tile">
+      <figcaption>
+        <span className={`quest-proof-marker quest-proof-marker-${tone}`} aria-hidden="true" />
+        <span>
+          <strong>{label}</strong>
+          <small>{helper}</small>
+        </span>
+      </figcaption>
+      <div className="quest-proof-image">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={src} alt={`${label} evidence`} />
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", color: "var(--text-muted)" }}>
-            <ImageOff size={22} />
-            <span style={{ fontSize: "0.72rem" }}>No image yet</span>
+          <div className="quest-proof-placeholder">
+            <span><ImageOff size={21} /></span>
+            <strong>Image unavailable</strong>
+            <small>No media is attached to this demo submission.</small>
           </div>
         )}
       </div>
-    </div>
+    </figure>
   );
 }
 
@@ -46,80 +48,92 @@ export function QuestVerificationDetail({
 }) {
   if (!item) {
     return (
-      <div className="card" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "320px", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-        Select a submission from the list to review proof.
-      </div>
+      <section className="card quest-detail-empty">
+        <span><ShieldCheck size={25} /></span>
+        <h2>Select a submission</h2>
+        <p>Choose a submitted quest from the review queue to inspect its evidence and details.</p>
+      </section>
     );
   }
 
   return (
-    <div className="card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <div>
-          <h2 style={{ fontSize: "1.05rem", fontWeight: "700", color: "var(--text-primary)" }}>{item.questTitle}</h2>
-          {item.address && (
-            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
-              <MapPin size={12} />
-              {item.address}
-              {item.city ? `, ${item.city}` : ""}
-            </p>
-          )}
+    <article className="card quest-detail-card">
+      <header className="quest-detail-header">
+        <div className="quest-detail-heading">
+          <div className="quest-detail-badges">
+            <span className="quest-type-badge">{humanizeQuestType(item.questType)}</span>
+            <span className="quest-status-badge"><span />Submitted</span>
+          </div>
+          <h2>{item.questTitle}</h2>
+          {item.questDescription && <p>{item.questDescription}</p>}
         </div>
-        <span className="badge" style={{ backgroundColor: "var(--stone-light)", color: "var(--stone)" }}>Submitted</span>
+        <div className="quest-reward-block">
+          <span><Award size={16} /></span>
+          <strong>{item.reward}</strong>
+          <small>token reward</small>
+        </div>
+      </header>
+
+      <section className="quest-review-meta" aria-label="Submission information">
+        <div>
+          <span className="quest-meta-icon"><UserRound size={16} /></span>
+          <span><small>Submitted by</small><strong>{item.userName}</strong></span>
+        </div>
+        <div>
+          <span className="quest-meta-icon"><Clock3 size={16} /></span>
+          <span><small>Submitted</small><strong>{item.submittedAgo}</strong></span>
+        </div>
+        <div>
+          <span className="quest-meta-icon"><MapPin size={16} /></span>
+          <span><small>Location</small><strong>{item.address ?? "Not provided"}{item.city ? `, ${item.city}` : ""}</strong></span>
+        </div>
+      </section>
+
+      <section className="quest-evidence-section">
+        <div className="quest-section-heading">
+          <div>
+            <p className="quest-panel-kicker">Evidence comparison</p>
+            <h3>Before and after</h3>
+          </div>
+          <span>2 evidence slots</span>
+        </div>
+        <div className="quest-proof-grid">
+          <ProofTile label="Before" helper="Original issue" src={item.beforeImageUrl} tone="before" />
+          <ProofTile label="After" helper="Citizen proof" src={item.afterImageUrl} tone="after" />
+        </div>
+      </section>
+
+      <div className="quest-review-note">
+        <AlertCircle size={17} />
+        <p><strong>Review carefully.</strong> Confirm that the after evidence matches the location and shows meaningful completion before releasing tokens.</p>
       </div>
 
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-        <ProofTile label="Before" src={item.beforeImageUrl} />
-        <ProofTile label="After (Proof)" src={item.afterImageUrl} />
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", padding: "12px 0", borderTop: "1px solid var(--border-color)", borderBottom: "1px solid var(--border-color)" }}>
-        <div>
-          <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "2px" }}>User</p>
-          <p style={{ fontSize: "0.85rem", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <User size={14} />
-            {item.userName}
-          </p>
+      <footer className="quest-action-bar">
+        <div className="quest-submission-id">
+          <small>Submission ID</small>
+          <span className="mono">{item.participantId}</span>
         </div>
-        <div>
-          <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "2px" }}>User ID</p>
-          <p className="mono" style={{ fontSize: "0.85rem", fontWeight: "600" }}>{item.userId}</p>
+        <div className="quest-action-buttons">
+          <button
+            type="button"
+            className="btn quest-reject-button"
+            disabled={isActioning}
+            onClick={() => onReject(item.participantId)}
+          >
+            <X size={16} />
+            Reject
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary quest-verify-button"
+            disabled={isActioning}
+            onClick={() => onVerify(item.participantId)}
+          >
+            <Check size={17} />
+            {isActioning ? "Processing…" : "Approve & reward"}
+          </button>
         </div>
-        <div>
-          <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "2px" }}>Reward</p>
-          <p style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--gov-green)", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <Award size={14} />
-            {item.reward} tokens
-          </p>
-        </div>
-        <div>
-          <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "2px" }}>Submitted</p>
-          <p style={{ fontSize: "0.85rem", fontWeight: "600" }}>{item.submittedAgo}</p>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "10px" }}>
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={isActioning}
-          onClick={() => onVerify(item.participantId)}
-          style={{ flex: 1, justifyContent: "center" }}
-        >
-          <Check size={16} />
-          Verify
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          disabled={isActioning}
-          onClick={() => onReject(item.participantId)}
-          style={{ flex: 1, justifyContent: "center", color: "var(--red)", borderColor: "var(--red-light)" }}
-        >
-          <X size={16} />
-          Reject
-        </button>
-      </div>
-    </div>
+      </footer>
+    </article>
   );
 }
