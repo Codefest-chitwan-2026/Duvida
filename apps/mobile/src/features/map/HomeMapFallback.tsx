@@ -1,4 +1,4 @@
-﻿import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -45,7 +45,7 @@ export const HomeMapFallback = forwardRef<HomeMapHandle, HomeMapFallbackProps>(
   (
     {
       center = DEMO_CENTER,
-      is3D = true,
+      is3D = false,
       selectedCategory = "all",
       selectedIssueId,
       onIssuePress,

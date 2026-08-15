@@ -43,7 +43,7 @@ const PROFILE = {
 const STATS: ProfileStat[] = [
   { label: "Quests", value: "27", icon: "document-text-outline", color: "#07833D" },
   { label: "Verified", value: "36", icon: "shield-checkmark-outline", color: "#2563EB" },
-  { label: "Tokens", value: "2,450", icon: "star", color: colors.coinGold },
+  { label: "Vouchers", value: "2,450", icon: "star", color: colors.coinGold },
   { label: "Impact Score", value: "1,285", icon: "leaf-outline", color: "#07833D" },
 ];
 
@@ -139,14 +139,28 @@ export function ProfileScreen() {
               <Ionicons name="arrow-back" size={26} color={colors.textPrimary} />
             </Pressable>
             <Text style={styles.headerTitle}>My Profile</Text>
-            <Pressable
-              accessibilityLabel="Profile settings"
-              hitSlop={10}
-              onPress={() => showComingSoon("Profile settings")}
-              style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
-            >
-              <Ionicons name="settings-outline" size={27} color={colors.textPrimary} />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                accessibilityLabel="Open Voucher Wallet"
+                hitSlop={10}
+                onPress={() => router.navigate("/wallet")}
+                style={({ pressed }) => [
+                  styles.headerButton,
+                  styles.walletHeaderButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Ionicons name="wallet" size={22} color={colors.brandGreenDark} />
+              </Pressable>
+              <Pressable
+                accessibilityLabel="Profile settings"
+                hitSlop={10}
+                onPress={() => showComingSoon("Profile settings")}
+                style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
+              >
+                <Ionicons name="settings-outline" size={25} color={colors.textPrimary} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.identity}>
@@ -191,17 +205,48 @@ export function ProfileScreen() {
             <View style={styles.divider} />
             <View style={styles.statsRow}>
               {STATS.map((stat, index) => (
-                <View
+                <Pressable
                   key={stat.label}
-                  style={[styles.statItem, index > 0 && styles.statDivider]}
+                  onPress={() => {
+                    if (stat.label === "Vouchers") router.navigate("/wallet");
+                    else if (stat.label === "Quests") router.navigate("/quests");
+                  }}
+                  style={({ pressed }) => [
+                    styles.statItem,
+                    index > 0 && styles.statDivider,
+                    pressed && (stat.label === "Vouchers" || stat.label === "Quests") && styles.pressed,
+                  ]}
                 >
                   <Ionicons name={stat.icon} size={25} color={stat.color} />
                   <Text style={styles.statValue}>{stat.value}</Text>
                   <Text style={styles.statLabel}>{stat.label}</Text>
-                </View>
+                </Pressable>
               ))}
             </View>
           </View>
+
+          <Pressable
+            onPress={() => router.navigate("/wallet")}
+            style={({ pressed }) => [styles.card, styles.walletCard, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Open Voucher Wallet"
+          >
+            <View style={styles.walletCardLeft}>
+              <View style={styles.walletIconCircle}>
+                <Ionicons name="wallet" size={22} color={colors.card} />
+              </View>
+              <View style={styles.walletCardCopy}>
+                <Text style={styles.walletCardTitle}>Voucher Wallet</Text>
+                <Text style={styles.walletCardSubtitle}>
+                  2,450 Everest Vouchers · Tap to manage & redeem
+                </Text>
+              </View>
+            </View>
+            <View style={styles.walletCardRight}>
+              <Text style={styles.walletCardAction}>View</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.brandGreenDark} />
+            </View>
+          </Pressable>
 
           <SectionCard title="Achievements" onViewAll={() => showComingSoon("Achievements")}>
             <View style={styles.achievementsRow}>
@@ -362,12 +407,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   headerButton: {
     width: 42,
     height: 42,
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
+  },
+  walletHeaderButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderWidth: 1,
+    borderColor: "#BBF0D0",
   },
   pressed: {
     opacity: 0.55,
@@ -537,6 +592,54 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: "center",
     color: "#526078",
+  },
+  walletCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF0D0",
+  },
+  walletCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  walletIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.brandGreenDark,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  walletCardCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  walletCardTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.textPrimary,
+  },
+  walletCardSubtitle: {
+    fontSize: 12,
+    color: "#047857",
+    fontWeight: "600",
+  },
+  walletCardRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingLeft: 8,
+  },
+  walletCardAction: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.brandGreenDark,
   },
   sectionCard: {
     paddingHorizontal: 16,
