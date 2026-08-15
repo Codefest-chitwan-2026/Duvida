@@ -30,13 +30,7 @@ export default function DuplicateCheckScreen() {
         if (duplicate) {
           router.replace({
             pathname: '/report-issue/existing-issue',
-            params: {
-              existingIssueId: duplicate.id,
-              title: duplicate.title,
-              description: duplicate.description ?? '',
-              address: duplicate.address ?? '',
-              createdAt: duplicate.createdAt,
-            },
+            params: { existingIssueId: duplicate.id },
           });
           return;
         }

@@ -122,6 +122,39 @@ export async function findNearbyDuplicateIssue(formData: IssueFormData): Promise
   };
 }
 
+export interface IssueDetail {
+  id: string;
+  title: string;
+  description: string | null;
+  address: string | null;
+  status: string;
+  upvotesCount: number;
+  createdAt: string;
+}
+
+export async function getIssueById(issueId: string): Promise<IssueDetail> {
+  const { data: issue, error } = await supabase
+    .from("issues")
+    .select("id, title, description, address, status, upvotes_count, created_at")
+    .eq("id", issueId)
+    .is("deleted_at", null)
+    .single();
+
+  if (error || !issue) {
+    throw new Error(`Could not load report: ${error?.message ?? "not found"}`);
+  }
+
+  return {
+    id: issue.id,
+    title: issue.title,
+    description: issue.description,
+    address: issue.address,
+    status: issue.status,
+    upvotesCount: issue.upvotes_count,
+    createdAt: issue.created_at,
+  };
+}
+
 export async function submitIssueReport(formData: IssueFormData) {
   const {
     data: { user },
