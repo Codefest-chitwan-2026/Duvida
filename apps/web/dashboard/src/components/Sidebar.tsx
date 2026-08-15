@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -16,12 +17,14 @@ import {
   LogOut,
 } from "lucide-react";
 
-// Everything lives on the single dashboard page today, so nav items point at
-// in-page sections (closest matching widget) rather than separate routes.
+// Most sections still live on the single dashboard page, so those nav items
+// point at in-page anchors (closest matching widget) rather than separate
+// routes. Quests is a real route (its own verification queue), so it's
+// matched by pathname instead of click state — see activeId below.
 const NAV_ITEMS: { id: string; href: string; label: string; icon: typeof LayoutDashboard; enabled: boolean }[] = [
   { id: "dashboard", href: "/", label: "Dashboard", icon: LayoutDashboard, enabled: true },
   { id: "reports", href: "/#recent-reports", label: "Reports", icon: FileText, enabled: true },
-  { id: "quests", href: "/", label: "Quests", icon: Award, enabled: true },
+  { id: "quests", href: "/quests", label: "Quests", icon: Award, enabled: true },
   { id: "users", href: "/#top-reporters", label: "Users", icon: Users, enabled: true },
   { id: "verifications", href: "/#status-breakdown", label: "Verifications", icon: ShieldCheck, enabled: true },
   { id: "analytics", href: "/#analytics-section", label: "Analytics", icon: BarChart3, enabled: true },
@@ -31,10 +34,19 @@ const NAV_ITEMS: { id: string; href: string; label: string; icon: typeof LayoutD
 ];
 
 export function Sidebar({ organizationName }: { organizationName: string }) {
-  // All nav items live on the same page (home route or in-page anchors), so
-  // pathname never changes between them — track the active item by click
-  // instead, and start with nothing selected until the user picks one.
+  const pathname = usePathname();
+
+  // In-page anchor items share the "/" pathname, so pathname alone can't
+  // distinguish them — track those by click instead, and start with nothing
+  // selected until the user picks one. Quests is a real route, so it's
+  // synced from pathname directly and overrides click state whenever we're
+  // actually on /quests.
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pathname === "/quests") setActiveId("quests");
+    else if (pathname === "/") setActiveId((current) => (current === "quests" ? null : current));
+  }, [pathname]);
 
   return (
     <aside className="sidebar">

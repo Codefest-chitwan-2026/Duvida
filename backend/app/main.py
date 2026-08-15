@@ -1,3 +1,4 @@
+import time
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -165,6 +166,34 @@ async def submit_issue_endpoint(
         ) from exc
 
     return {"issue": issue, "media": media_rows}
+
+
+@app.post("/community/issues/{issue_id}/media")
+async def upload_issue_media_endpoint(
+    issue_id: str,
+    reporter_id: str = Form(...),
+    file: UploadFile = File(...),
+):
+    """Attach one additional media file to an already-created issue.
+
+    Used when a report has more than one photo/video: the mobile client
+    uploads the first file together with the issue in POST /community/issues,
+    then calls this endpoint once per extra file (each call is independent,
+    so the storage-path uniqueness index here is a timestamp, not a shared
+    counter).
+    """
+    try:
+        file_bytes = await file.read()
+        return upload_issue_media(
+            issue_id=issue_id,
+            uploaded_by=reporter_id,
+            index=int(time.time() * 1000) % 1_000_000,
+            filename=file.filename or "file",
+            file_bytes=file_bytes,
+            content_type=file.content_type,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Media upload failed: {exc}") from exc
 
 
 @app.post("/quests/{quest_id}/accept")

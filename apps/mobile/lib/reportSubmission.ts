@@ -1,3 +1,5 @@
+import * as FileSystem from "expo-file-system/legacy";
+
 import { env } from "@/lib/env";
 import { clearCachedGuestId, getReporterId } from "@/lib/identity";
 
@@ -6,6 +8,8 @@ import { IssueFormData, MediaItem } from "../types/issue";
 export type SubmitReportResult = {
   issueId: string;
 };
+
+type IssueUploadResult = { status: number; body: string };
 
 function inferCity(address: string): string | undefined {
   const parts = address
@@ -21,55 +25,86 @@ function inferCity(address: string): string | undefined {
   return last;
 }
 
-async function appendMedia(formData: FormData, items: MediaItem[]): Promise<void> {
-  for (const item of items) {
-    const fileResponse = await fetch(item.uri);
-    const blob = await fileResponse.blob();
-    formData.append("files", new Blob([blob], { type: item.mimeType }), item.name);
-  }
-}
+// Expo SDK 57's fetch/FormData/Blob polyfill can't build a multipart body
+// from a local file:// URI on this project's setup (RN's Blob can't be
+// constructed from JS binary data — see BlobManager.createFromParts).
+// FileSystem.uploadAsync uploads straight from disk natively, sidestepping
+// that whole Blob machinery. It only takes one file per call, so the issue
+// is created together with the first media item, and any additional items
+// are attached with follow-up calls to /community/issues/{id}/media.
 
-async function buildFormData(reporterId: string, form: IssueFormData): Promise<FormData> {
-  const formData = new FormData();
-  formData.append("reporter_id", reporterId);
-  formData.append("category", form.category);
-  formData.append("description", form.description);
-  formData.append("severity", form.severity);
-  formData.append("latitude", String(form.location.latitude));
-  formData.append("longitude", String(form.location.longitude));
-  formData.append("address", form.location.address);
-
+async function uploadIssueWithFirstFile(
+  reporterId: string,
+  form: IssueFormData,
+  firstMedia: MediaItem
+): Promise<IssueUploadResult> {
+  const parameters: Record<string, string> = {
+    reporter_id: reporterId,
+    category: form.category,
+    description: form.description,
+    severity: form.severity,
+    latitude: String(form.location.latitude),
+    longitude: String(form.location.longitude),
+    address: form.location.address,
+  };
   const city = inferCity(form.location.address);
-  if (city) formData.append("city", city);
+  if (city) parameters.city = city;
 
-  await appendMedia(formData, form.media);
-  return formData;
+  const result = await FileSystem.uploadAsync(`${env.advisorApiUrl}/community/issues`, firstMedia.uri, {
+    httpMethod: "POST",
+    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+    fieldName: "files",
+    mimeType: firstMedia.mimeType,
+    parameters,
+  });
+
+  return { status: result.status, body: result.body };
 }
 
-async function postIssue(reporterId: string, form: IssueFormData): Promise<Response> {
-  const formData = await buildFormData(reporterId, form);
-  return fetch(`${env.advisorApiUrl}/community/issues`, {
-    method: "POST",
-    body: formData,
+async function uploadAdditionalMedia(reporterId: string, issueId: string, item: MediaItem): Promise<void> {
+  await FileSystem.uploadAsync(`${env.advisorApiUrl}/community/issues/${issueId}/media`, item.uri, {
+    httpMethod: "POST",
+    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+    fieldName: "file",
+    mimeType: item.mimeType,
+    parameters: { reporter_id: reporterId },
   });
+}
+
+async function postIssue(reporterId: string, form: IssueFormData): Promise<IssueUploadResult> {
+  const [firstMedia, ...restMedia] = form.media;
+  if (!firstMedia) {
+    throw new Error("At least one photo or video is required.");
+  }
+
+  const result = await uploadIssueWithFirstFile(reporterId, form, firstMedia);
+
+  if (result.status >= 200 && result.status < 300 && restMedia.length > 0) {
+    const data: { issue: { id: string } } = JSON.parse(result.body);
+    for (const item of restMedia) {
+      await uploadAdditionalMedia(reporterId, data.issue.id, item);
+    }
+  }
+
+  return result;
 }
 
 export async function submitReport(form: IssueFormData): Promise<SubmitReportResult> {
   let reporterId = await getReporterId();
-  let response = await postIssue(reporterId, form);
+  let result = await postIssue(reporterId, form);
 
-  if (response.status === 422) {
+  if (result.status === 422) {
     // Cached guest id no longer exists on the backend (e.g. a database
     // reset) — register a fresh one and retry once before giving up.
     await clearCachedGuestId();
     reporterId = await getReporterId();
-    response = await postIssue(reporterId, form);
+    result = await postIssue(reporterId, form);
   }
 
-  if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`Request failed (${result.status})`);
   }
 
-  const data: { issue: { id: string } } = await response.json();
+  const data: { issue: { id: string } } = JSON.parse(result.body);
   return { issueId: data.issue.id };
 }

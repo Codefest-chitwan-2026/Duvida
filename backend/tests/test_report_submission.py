@@ -315,3 +315,31 @@ def test_submit_issue_endpoint_media_upload_failure():
             files={"files": ("photo.png", b"fake-bytes", "image/png")},
         )
     assert response.status_code == 502
+
+
+def test_upload_additional_media_endpoint_success():
+    media_row = {"id": "media-2", "issue_id": ISSUE_ID, "storage_path": f"{ISSUE_ID}/1-clip.mp4"}
+    with patch("app.main.upload_issue_media", return_value=media_row) as mock_upload:
+        response = client.post(
+            f"/community/issues/{ISSUE_ID}/media",
+            data={"reporter_id": REPORTER_ID},
+            files={"file": ("clip.mp4", b"fake-bytes", "video/mp4")},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == media_row
+    call_kwargs = mock_upload.call_args.kwargs
+    assert call_kwargs["issue_id"] == ISSUE_ID
+    assert call_kwargs["uploaded_by"] == REPORTER_ID
+    assert call_kwargs["filename"] == "clip.mp4"
+    assert call_kwargs["content_type"] == "video/mp4"
+
+
+def test_upload_additional_media_endpoint_failure():
+    with patch("app.main.upload_issue_media", side_effect=RuntimeError("boom")):
+        response = client.post(
+            f"/community/issues/{ISSUE_ID}/media",
+            data={"reporter_id": REPORTER_ID},
+            files={"file": ("clip.mp4", b"fake-bytes", "video/mp4")},
+        )
+    assert response.status_code == 502

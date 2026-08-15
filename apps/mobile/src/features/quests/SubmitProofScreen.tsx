@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -71,20 +72,21 @@ export function SubmitProofScreen({
     setUploading(true);
     setUploadError(null);
     try {
-      const { filename, type } = inferFilenameAndType(afterUri);
-      const fileResponse = await fetch(afterUri);
-      const blob = await fileResponse.blob();
+      const { type } = inferFilenameAndType(afterUri);
 
-      const formData = new FormData();
-      formData.append("file", new Blob([blob], { type }), filename);
-
-      const response = await fetch(`${env.advisorApiUrl}/quests/${questId}/proof`, {
-        method: "POST",
-        body: formData,
+      // Expo SDK 57's fetch/FormData/Blob polyfill can't build a multipart
+      // body from a local file:// URI on this project's setup (RN's Blob
+      // can't be constructed from JS binary data). FileSystem.uploadAsync
+      // uploads straight from disk natively, sidestepping that entirely.
+      const result = await FileSystem.uploadAsync(`${env.advisorApiUrl}/quests/${questId}/proof`, afterUri, {
+        httpMethod: "POST",
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: "file",
+        mimeType: type,
       });
 
-      if (!response.ok) {
-        throw new Error(`Request failed (${response.status})`);
+      if (result.status < 200 || result.status >= 300) {
+        throw new Error(`Request failed (${result.status})`);
       }
 
       Alert.alert("Proof submitted", "Your quest is now marked as submitted.", [

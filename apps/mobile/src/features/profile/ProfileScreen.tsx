@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState, type ReactNode } from "react";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "@/lib/auth";
 import { colors } from "@/theme/colors";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -108,10 +109,17 @@ const RECENT_BADGES: RecentBadge[] = [
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { signOut } = useAuth();
   const progress = Math.min(100, (PROFILE.currentXp / PROFILE.nextLevelXp) * 100);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const showComingSoon = (feature: string) => {
     Alert.alert(feature, `${feature} will be available soon.`);
+  };
+
+  const handleLogout = () => {
+    setSettingsVisible(false);
+    signOut();
   };
 
   return (
@@ -155,7 +163,7 @@ export function ProfileScreen() {
               <Pressable
                 accessibilityLabel="Profile settings"
                 hitSlop={10}
-                onPress={() => showComingSoon("Profile settings")}
+                onPress={() => setSettingsVisible(true)}
                 style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
               >
                 <Ionicons name="settings-outline" size={25} color={colors.textPrimary} />
@@ -301,6 +309,34 @@ export function ProfileScreen() {
           </SectionCard>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={settingsVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <Pressable
+          style={styles.settingsOverlay}
+          onPress={() => setSettingsVisible(false)}
+          accessibilityLabel="Close settings"
+        >
+          <Pressable style={styles.settingsSheet} onPress={(event) => event.stopPropagation()}>
+            <View style={styles.settingsHandle} />
+            <Text style={styles.settingsTitle}>Settings</Text>
+
+            <Pressable
+              onPress={handleLogout}
+              accessibilityRole="button"
+              accessibilityLabel="Log out"
+              style={({ pressed }) => [styles.settingsRow, pressed && styles.pressed]}
+            >
+              <Ionicons name="log-out-outline" size={22} color={colors.severityHigh} />
+              <Text style={styles.settingsRowTextDanger}>Log Out</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -758,5 +794,43 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 10,
     color: "#526078",
+  },
+  settingsOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 20, 0.45)",
+  },
+  settingsSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 32,
+    backgroundColor: colors.card,
+  },
+  settingsHandle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 16,
+    backgroundColor: colors.border,
+  },
+  settingsTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
+  settingsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 14,
+  },
+  settingsRowTextDanger: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.severityHigh,
   },
 });

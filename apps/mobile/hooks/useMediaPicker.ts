@@ -59,26 +59,12 @@ function assetsToMediaItems(assets: ImagePicker.ImagePickerAsset[]): MediaItem[]
 }
 
 export function useMediaPicker(onPicked: (items: MediaItem[]) => void) {
-  const pickFromLibrary = useCallback(async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      showAlert('Permission needed', 'Please allow access to your photo library to add media.');
+  const takePhoto = useCallback(async () => {
+    if (Platform.OS === 'web') {
+      showAlert('Camera not available', 'Camera capture isn\'t supported in a web browser. Please use the mobile app.');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
-      allowsMultipleSelection: Platform.OS !== 'web',
-      quality: 0.8,
-    });
-
-    if (result.canceled) return;
-
-    const items = assetsToMediaItems(result.assets);
-    if (items.length > 0) onPicked(items);
-  }, [onPicked]);
-
-  const pickFromCamera = useCallback(async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       showAlert('Permission needed', 'Please allow camera access to take a photo.');
@@ -86,7 +72,7 @@ export function useMediaPicker(onPicked: (items: MediaItem[]) => void) {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images', 'videos'],
+      mediaTypes: ['images'],
       quality: 0.8,
     });
 
@@ -96,25 +82,29 @@ export function useMediaPicker(onPicked: (items: MediaItem[]) => void) {
     if (items.length > 0) onPicked(items);
   }, [onPicked]);
 
-  const openPicker = useCallback(() => {
-    // Camera capture isn't a supported flow on web, and react-native-web's
-    // Alert can't render an action sheet, so go straight to the file picker.
+  const recordVideo = useCallback(async () => {
     if (Platform.OS === 'web') {
-      pickFromLibrary();
+      showAlert('Camera not available', 'Video recording isn\'t supported in a web browser. Please use the mobile app.');
       return;
     }
 
-    Alert.alert(
-      'Add Photo or Video',
-      'Choose a source',
-      [
-        { text: 'Take Photo', onPress: pickFromCamera },
-        { text: 'Choose from Library', onPress: pickFromLibrary },
-        { text: 'Cancel', style: 'cancel' },
-      ],
-      { cancelable: true }
-    );
-  }, [pickFromCamera, pickFromLibrary]);
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      showAlert('Permission needed', 'Please allow camera access to record a video.');
+      return;
+    }
 
-  return { openPicker };
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['videos'],
+      videoMaxDuration: 30,
+      quality: 0.8,
+    });
+
+    if (result.canceled) return;
+
+    const items = assetsToMediaItems(result.assets);
+    if (items.length > 0) onPicked(items);
+  }, [onPicked]);
+
+  return { takePhoto, recordVideo };
 }
