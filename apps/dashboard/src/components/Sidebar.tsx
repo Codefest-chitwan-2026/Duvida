@@ -13,6 +13,7 @@ import {
   Megaphone,
   Settings,
   Building2,
+  LogOut,
 } from "lucide-react";
 
 // Everything lives on the single dashboard page today, so nav items point at
@@ -132,6 +133,11 @@ export function Sidebar({ organizationName }: { organizationName: string }) {
             <p style={{ fontSize: "0.72rem", color: "var(--text-on-navy-muted)" }}>{organizationName}</p>
           </div>
         </div>
+
+        <button type="button" className="signout-btn" title="Sign out">
+          <LogOut size={16} />
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );

@@ -112,6 +112,42 @@ button {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background-color: rgba(185, 28, 28, 0.14);
+  color: #f87171;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.signout-btn:hover {
+  background-color: rgba(185, 28, 28, 0.28);
+  border-color: rgba(248, 113, 113, 0.6);
+  color: #fca5a5;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.15);
+}
+
+.signout-btn:active {
+  transform: scale(0.97);
+}
+
+.signout-btn:focus-visible {
+  outline: 2px solid #f87171;
+  outline-offset: 2px;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
