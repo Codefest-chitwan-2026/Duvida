@@ -172,13 +172,13 @@ button {
 
 .nav-item-active {
   background-color: var(--navy-elevated);
-  color: #ffffff;
+  color: var(--text-on-navy);
   font-weight: 600;
 }
 
 .nav-item-active:hover {
   background-color: var(--navy-elevated);
-  color: #ffffff;
+  color: var(--text-on-navy);
 }
 
 .nav-item-disabled {
