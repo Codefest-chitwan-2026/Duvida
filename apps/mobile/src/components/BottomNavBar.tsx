@@ -12,10 +12,12 @@ type BottomNavBarProps = {
   onCreatePress: () => void;
 };
 
-const TABS: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+const LEFT_TABS: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "home", label: "Map", icon: "map" },
   { key: "quests", label: "Quests", icon: "trophy" },
-  { key: "wallet", label: "Wallet", icon: "wallet" },
+];
+
+const RIGHT_TABS: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "advisor", label: "EcoBot", icon: "chatbubble-ellipses" },
   { key: "profile", label: "Profile", icon: "person" },
 ];
@@ -27,7 +29,7 @@ export function BottomNavBar({ active, onSelectTab, onCreatePress }: BottomNavBa
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <View style={styles.bar}>
         <View style={styles.tabGroup}>
-          {TABS.slice(0, 2).map((tab) => (
+          {LEFT_TABS.map((tab) => (
             <TabButton
               key={tab.key}
               tab={tab}
@@ -40,7 +42,7 @@ export function BottomNavBar({ active, onSelectTab, onCreatePress }: BottomNavBa
         <View style={styles.fabSpacer} />
 
         <View style={styles.tabGroup}>
-          {TABS.slice(2).map((tab) => (
+          {RIGHT_TABS.map((tab) => (
             <TabButton
               key={tab.key}
               tab={tab}
@@ -66,7 +68,7 @@ function TabButton({
   isActive,
   onPress,
 }: {
-  tab: (typeof TABS)[number];
+  tab: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap };
   isActive: boolean;
   onPress: () => void;
 }) {

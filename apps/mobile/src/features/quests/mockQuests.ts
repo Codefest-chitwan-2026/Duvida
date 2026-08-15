@@ -2,7 +2,7 @@ export type Quest = {
   id: string;
   title: string;
   description: string;
-  tokens: number;
+  vouchers: number;
   participants: number;
   progressPercent: number;
   location: string;
@@ -14,7 +14,7 @@ export const mockQuests: Quest[] = [
     id: "clean-the-park",
     title: "Clean the Park",
     description: "Help keep our community park clean and green.",
-    tokens: 150,
+    vouchers: 150,
     participants: 87,
     progressPercent: 64,
     location: "NMC Park, Kathmandu",
@@ -24,7 +24,7 @@ export const mockQuests: Quest[] = [
     id: "plastic-free",
     title: "Plastic Free Challenge",
     description: "Go a full week without single-use plastic.",
-    tokens: 200,
+    vouchers: 200,
     participants: 43,
     progressPercent: 28,
     location: "Citywide",

@@ -45,7 +45,7 @@ function QuestCard({ quest }: { quest: Quest }) {
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <MaterialCommunityIcons name="hexagon" size={13} color={colors.coinGold} />
-            <Text style={styles.statValue}>{quest.tokens}</Text>
+            <Text style={styles.statValue}>{quest.vouchers}</Text>
           </View>
           <View style={styles.stat}>
             <Ionicons name="people" size={13} color={colors.textMuted} />

@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -33,7 +33,7 @@ export default function HomeScreen() {
   const mapRef = useRef<HomeMapHandle>(null);
 
   const { coordinate } = useUserLocation();
-  const [is3D, setIs3D] = useState(true);
+  const [is3D, setIs3D] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
 
