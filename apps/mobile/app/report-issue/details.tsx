@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,34 +30,193 @@ type SeverityIconName = React.ComponentProps<typeof MaterialCommunityIcons>['nam
 interface SeverityOption {
   level: SeverityLevel;
   label: string;
+  title: string;
+  description: string;
+  tag: string;
   icon: SeverityIconName;
   color: string;
+  darkColor: string;
   surface: string;
+  border: string;
 }
 
 const SEVERITY_OPTIONS: SeverityOption[] = [
   {
     level: 'low',
     label: 'Low',
+    title: 'Low Priority (Cosmetic & Routine)',
+    description: 'Minor non-urgent issues or light cleaning (e.g. small litter, faint road markings, garden trimming).',
+    tag: 'Low Priority Selected',
     icon: 'emoticon-happy-outline',
     color: colors.primaryGreen,
-    surface: '#F0FBF5',
+    darkColor: colors.primaryGreen, // Exact same green as the Next button (#27AE60)
+    surface: colors.greenSurface,
+    border: '#A9DFBF',
   },
   {
     level: 'medium',
     label: 'Medium',
+    title: 'Medium Priority (Moderate Impact)',
+    description: 'Moderate disruption or public inconvenience (e.g. overflowing waste bin, broken street light, minor traffic obstacle).',
+    tag: 'Medium Priority Selected',
     icon: 'emoticon-neutral-outline',
-    color: colors.amber,
-    surface: '#FFF8F0',
+    color: '#D97706',
+    darkColor: '#78350F', // Rich dark roasted amber / ochre
+    surface: '#FFFBEB',
+    border: '#FDE68A',
   },
   {
     level: 'high',
     label: 'High',
-    icon: 'alert',
-    color: colors.red,
-    surface: '#FFF3F3',
+    title: 'High Priority (Urgent & Hazard)',
+    description: 'Critical safety hazard or blockage requiring immediate action (e.g. deep pothole, exposed live wire, burst water pipe).',
+    tag: 'High Priority (Urgent)',
+    icon: 'alert-circle',
+    color: '#DC2626',
+    darkColor: '#7F1D1D', // Rich dark crimson burgundy
+    surface: '#FEF2F2',
+    border: '#FECACA',
   },
 ];
+
+interface AnimatedSeverityButtonProps {
+  option: SeverityOption;
+  selected: boolean;
+  onPress: () => void;
+}
+
+function AnimatedSeverityButton({ option, selected, onPress }: AnimatedSeverityButtonProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const iconScaleAnim = useRef(new Animated.Value(1)).current;
+  const activeAnim = useRef(new Animated.Value(selected ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(activeAnim, {
+      toValue: selected ? 1 : 0,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
+
+    if (selected) {
+      // Tactile spring bounce when selected
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.07,
+          friction: 4,
+          tension: 110,
+          useNativeDriver: false,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 6,
+          tension: 70,
+          useNativeDriver: false,
+        }),
+      ]).start();
+
+      // Icon pop
+      Animated.sequence([
+        Animated.timing(iconScaleAnim, {
+          toValue: 1.35,
+          duration: 130,
+          useNativeDriver: false,
+        }),
+        Animated.spring(iconScaleAnim, {
+          toValue: 1,
+          friction: 4,
+          tension: 80,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        useNativeDriver: false,
+      }).start();
+      Animated.spring(iconScaleAnim, {
+        toValue: 1,
+        friction: 6,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [selected]);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.90,
+      friction: 5,
+      tension: 140,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: selected ? 1.04 : 1,
+      friction: 4,
+      tension: 80,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const backgroundColor = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [option.surface, option.darkColor],
+  });
+
+  const borderColor = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [option.border, option.darkColor],
+  });
+
+  return (
+    <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+      >
+        <Animated.View
+          style={[
+            styles.severityButton,
+            {
+              backgroundColor,
+              borderColor,
+              shadowColor: option.darkColor,
+            },
+            selected && styles.severityButtonSelected,
+          ]}
+          accessibilityRole="radio"
+          accessibilityLabel={`${option.label} severity`}
+          accessibilityState={{ checked: selected }}
+        >
+          <Animated.View style={{ transform: [{ scale: iconScaleAnim }] }}>
+            <MaterialCommunityIcons
+              name={option.icon}
+              size={20}
+              color={selected ? colors.white : option.color}
+            />
+          </Animated.View>
+          <Text
+            style={[
+              styles.severityLabel,
+              { color: selected ? colors.white : option.color },
+              selected && styles.severityLabelSelected,
+            ]}
+          >
+            {option.label}
+          </Text>
+          {selected && (
+            <View style={styles.selectedBadge}>
+              <MaterialCommunityIcons name="check" size={10} color={option.darkColor} />
+            </View>
+          )}
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 const DESCRIPTION_MAX_LENGTH = 300;
 const WEB_MAX_WIDTH = 480;
@@ -74,6 +235,8 @@ export default function DetailsScreen() {
   const { formData, updateDescription, selectSeverity, updateLocation } = useIssueForm();
   const [pickerVisible, setPickerVisible] = useState(false);
 
+  const currentSeverity =
+    SEVERITY_OPTIONS.find((s) => s.level === formData.severity) ?? SEVERITY_OPTIONS[0];
   const compactAddress = formatCompactAddress(formData.location.address);
   const coordinates = `Lat ${formData.location.latitude.toFixed(4)}, Long ${formData.location.longitude.toFixed(4)}`;
 
@@ -169,41 +332,83 @@ export default function DetailsScreen() {
               </Text>
             </View>
 
-            <Text style={[styles.sectionTitle, styles.severityTitle]}>Severity Level</Text>
-            <View style={styles.severityRow} accessibilityRole="radiogroup">
-              {SEVERITY_OPTIONS.map((option) => {
-                const selected = formData.severity === option.level;
-
-                return (
-                  <TouchableOpacity
-                    key={option.level}
-                    style={[
-                      styles.severityButton,
-                      {
-                        backgroundColor: option.surface,
-                        borderColor: option.color,
-                      },
-                      selected && styles.severityButtonSelected,
-                    ]}
-                    onPress={() => selectSeverity(option.level)}
-                    activeOpacity={0.8}
-                    accessibilityRole="radio"
-                    accessibilityLabel={`${option.label} severity`}
-                    accessibilityState={{ checked: selected }}
-                  >
-                    <MaterialCommunityIcons
-                      name={option.icon}
-                      size={18}
-                      color={option.color}
-                    />
-                    <Text style={[styles.severityLabel, { color: option.color }]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={styles.severityHeaderRow}>
+              <Text style={styles.sectionTitle}>Severity Level</Text>
+              <View
+                style={[
+                  styles.severityTagBadge,
+                  {
+                    backgroundColor: currentSeverity.surface,
+                    borderColor: currentSeverity.border,
+                  },
+                ]}
+              >
+                <View style={[styles.severityDot, { backgroundColor: currentSeverity.color }]} />
+                <Text style={[styles.severityTagText, { color: currentSeverity.color }]}>
+                  {currentSeverity.tag}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.helperText}>How urgent is this issue?</Text>
+
+            <View style={styles.severityRow} accessibilityRole="radiogroup">
+              {SEVERITY_OPTIONS.map((option) => (
+                <AnimatedSeverityButton
+                  key={option.level}
+                  option={option}
+                  selected={formData.severity === option.level}
+                  onPress={() => selectSeverity(option.level)}
+                />
+              ))}
+            </View>
+
+            {/* Dynamic Dark Color Section Card */}
+            <View
+              style={[
+                styles.severityColorCard,
+                {
+                  backgroundColor: currentSeverity.surface,
+                  borderColor: currentSeverity.border,
+                  borderLeftColor: currentSeverity.darkColor,
+                  borderLeftWidth: 5,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.severityIconBox,
+                  { backgroundColor: currentSeverity.darkColor },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={currentSeverity.icon}
+                  size={19}
+                  color={colors.white}
+                />
+              </View>
+              <View style={styles.severityCardCopy}>
+                <View style={styles.severityCardTopLine}>
+                  <Text
+                    style={[
+                      styles.severityCardTitle,
+                      { color: currentSeverity.darkColor },
+                    ]}
+                  >
+                    {currentSeverity.title}
+                  </Text>
+                  <View
+                    style={[
+                      styles.severityActivePill,
+                      { backgroundColor: currentSeverity.darkColor },
+                    ]}
+                  >
+                    <Text style={styles.severityActivePillText}>SELECTED</Text>
+                  </View>
+                </View>
+                <Text style={styles.severityCardDesc}>
+                  {currentSeverity.description}
+                </Text>
+              </View>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
 
@@ -365,41 +570,119 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },
-  severityTitle: {
+  severityHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: spacing.xxl,
+    marginBottom: spacing.xs,
+  },
+  severityTagBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  severityDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  severityTagText: {
+    fontSize: 12,
+    fontWeight: fontWeight.bold,
   },
   severityRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   severityButton: {
-    flex: 1,
-    minWidth: 0,
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.xs,
-    borderWidth: 1.25,
+    borderWidth: 1.5,
     borderRadius: radius.md,
+    position: 'relative',
   },
   severityButtonSelected: {
     borderWidth: 2,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 4,
   },
   severityLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
   },
-  helperText: {
-    marginTop: spacing.sm,
+  severityLabelSelected: {
+    fontWeight: fontWeight.bold,
+  },
+  selectedBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  severityColorCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing.md,
+  },
+  severityIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  severityCardCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  severityCardTopLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  severityCardTitle: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    fontWeight: fontWeight.bold,
+    flex: 1,
+  },
+  severityActivePill: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  severityActivePillText: {
+    fontSize: 9,
+    fontWeight: fontWeight.bold,
+    color: colors.white,
+    letterSpacing: 0.5,
+  },
+  severityCardDesc: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#334155',
   },
   footer: {
     flexDirection: 'row',
