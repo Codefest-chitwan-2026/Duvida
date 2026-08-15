@@ -1,9 +1,18 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { CalendarDays, Download } from "lucide-react";
 import type { DashboardFilters, ReportStatus } from "@/lib/data/types";
 
-const DATE_RANGE_LABEL = "May 18 – May 24, 2026";
+const DEFAULT_DATE = "2026-05-18";
+
+function formatDate(isoDate: string) {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export function TopFilters({
   filters,
@@ -21,13 +30,40 @@ export function TopFilters({
   onExport: () => void;
 }) {
   const hasWards = filters.wards.length > 0;
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const [selectedDate, setSelectedDate] = useState(DEFAULT_DATE);
+
+  const openDatePicker = () => {
+    const input = dateInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+    } else {
+      input.focus();
+    }
+  };
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
-      <button className="input-control" style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "var(--bg-surface)" }} type="button">
-        <CalendarDays size={15} color="var(--text-muted)" />
-        <span>{DATE_RANGE_LABEL}</span>
-      </button>
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "60px", width: "100%" }}>
+      <div style={{ position: "relative" }}>
+        <button
+          onClick={openDatePicker}
+          className="input-control"
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "var(--bg-surface)" }}
+          type="button"
+        >
+          <CalendarDays size={15} color="var(--text-muted)" />
+          <span>{formatDate(selectedDate)}</span>
+        </button>
+        <input
+          ref={dateInputRef}
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          aria-label="Choose date"
+          style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none" }}
+        />
+      </div>
 
       {hasWards ? (
         <select
@@ -67,7 +103,7 @@ export function TopFilters({
         </select>
       )}
 
-      <button onClick={onExport} className="btn btn-primary" type="button">
+      <button onClick={onExport} className="btn btn-primary" style={{ marginLeft: "auto" }} type="button">
         <Download size={15} />
         <span>Export Report</span>
       </button>
