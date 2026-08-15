@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .community_issues import fetch_active_issues, fetch_issue_by_id
@@ -17,10 +17,13 @@ from .quest_participation import (
     QuestNotAccepted,
     QuestNotFound,
     QuestNotStarted,
+    QuestNotSubmitted,
     accept_quest,
     fetch_my_quests,
     start_quest,
     submit_quest,
+    upload_quest_proof,
+    verify_quest,
 )
 from .retrieval import format_retrieved_chunks, retrieve
 from .schemas import ChatReply, ChatRequest, CommunityIssue, MyQuest
@@ -122,5 +125,30 @@ def submit_quest_endpoint(quest_id: str):
         raise HTTPException(status_code=404, detail="Quest not found") from exc
     except QuestNotStarted as exc:
         raise HTTPException(status_code=409, detail="Quest must be in progress before submitting") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+
+@app.post("/quests/{quest_id}/proof")
+async def upload_quest_proof_endpoint(quest_id: str, file: UploadFile = File(...)):
+    try:
+        file_bytes = await file.read()
+        return upload_quest_proof(quest_id, file.filename, file_bytes, file.content_type)
+    except QuestNotFound as exc:
+        raise HTTPException(status_code=404, detail="Quest not found") from exc
+    except QuestNotStarted as exc:
+        raise HTTPException(status_code=409, detail="Quest must be in progress before uploading proof") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+
+@app.post("/quests/{quest_id}/verify")
+def verify_quest_endpoint(quest_id: str):
+    try:
+        return verify_quest(quest_id)
+    except QuestNotFound as exc:
+        raise HTTPException(status_code=404, detail="Quest not found") from exc
+    except QuestNotSubmitted as exc:
+        raise HTTPException(status_code=409, detail="Quest must be submitted before verifying") from exc
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PhotoPlaceholder } from "@/components/PhotoPlaceholder";
@@ -32,11 +32,11 @@ type ActionState = { kind: "idle" } | { kind: "loading" } | { kind: "error"; mes
 
 export default function QuestsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [myQuests, setMyQuests] = useState<MyQuest[]>([]);
   const [myQuestsLoading, setMyQuestsLoading] = useState(false);
   const [myQuestsError, setMyQuestsError] = useState<string | null>(null);
   const [startStateByQuestId, setStartStateByQuestId] = useState<Record<string, ActionState>>({});
-  const [submitStateByQuestId, setSubmitStateByQuestId] = useState<Record<string, ActionState>>({});
 
   const fetchMyQuests = async () => {
     setMyQuestsLoading(true);
@@ -55,9 +55,11 @@ export default function QuestsScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchMyQuests();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyQuests();
+    }, [])
+  );
 
   const startQuest = async (questId: string) => {
     setStartStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "loading" } }));
@@ -74,19 +76,17 @@ export default function QuestsScreen() {
     }
   };
 
-  const submitQuest = async (questId: string) => {
-    setSubmitStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "loading" } }));
-    try {
-      const response = await fetch(`${env.advisorApiUrl}/quests/${questId}/submit`, { method: "POST" });
-      if (!response.ok) {
-        throw new Error(`Request failed (${response.status})`);
-      }
-      setSubmitStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "idle" } }));
-      await fetchMyQuests();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      setSubmitStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "error", message } }));
-    }
+  const openSubmitProof = (quest: MyQuest) => {
+    router.push({
+      pathname: "/quests/[id]/submit-proof",
+      params: {
+        id: quest.quest_id,
+        title: quest.title ?? "Untitled quest",
+        description: quest.description ?? "",
+        points_reward: String(quest.points_reward ?? 0),
+        progress_percent: String(quest.progress_percent),
+      },
+    });
   };
 
   return (
@@ -118,8 +118,7 @@ export default function QuestsScreen() {
             quest={quest}
             startState={startStateByQuestId[quest.quest_id] ?? { kind: "idle" }}
             onStartQuest={() => startQuest(quest.quest_id)}
-            submitState={submitStateByQuestId[quest.quest_id] ?? { kind: "idle" }}
-            onSubmitQuest={() => submitQuest(quest.quest_id)}
+            onSubmitProof={() => openSubmitProof(quest)}
           />
         ))}
 
@@ -136,14 +135,12 @@ function MyQuestCard({
   quest,
   startState,
   onStartQuest,
-  submitState,
-  onSubmitQuest,
+  onSubmitProof,
 }: {
   quest: MyQuest;
   startState: ActionState;
   onStartQuest: () => void;
-  submitState: ActionState;
-  onSubmitQuest: () => void;
+  onSubmitProof: () => void;
 }) {
   return (
     <View style={styles.myQuestCard}>
@@ -180,21 +177,30 @@ function MyQuestCard({
       )}
 
       {quest.participation_status === "in_progress" && (
-        <Pressable
-          style={styles.startQuestButton}
-          onPress={onSubmitQuest}
-          disabled={submitState.kind === "loading"}
-        >
-          {submitState.kind === "loading" ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.startQuestButtonText}>Submit Completion</Text>
-          )}
+        <Pressable style={styles.startQuestButton} onPress={onSubmitProof}>
+          <Text style={styles.startQuestButtonText}>Submit Proof</Text>
         </Pressable>
       )}
 
+      {quest.participation_status === "submitted" && (
+        <View style={styles.statusNotice}>
+          <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+          <Text style={styles.waitingText}>Waiting for verification</Text>
+        </View>
+      )}
+
+      {quest.participation_status === "completed" && (
+        <View style={styles.statusNotice}>
+          <Ionicons name="checkmark-circle" size={16} color={colors.brandGreenDark} />
+          <Text style={styles.completedText}>Completed</Text>
+          <View style={styles.pointsAwardedPill}>
+            <MaterialCommunityIcons name="hexagon" size={13} color={colors.coinGold} />
+            <Text style={styles.pointsAwardedText}>{quest.points_awarded} points awarded</Text>
+          </View>
+        </View>
+      )}
+
       {startState.kind === "error" && <Text style={styles.myQuestsErrorText}>{startState.message}</Text>}
-      {submitState.kind === "error" && <Text style={styles.myQuestsErrorText}>{submitState.message}</Text>}
     </View>
   );
 }
@@ -299,6 +305,37 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 13.5,
     fontWeight: "700",
+  },
+  statusNotice: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  waitingText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.textMuted,
+  },
+  completedText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.brandGreenDark,
+  },
+  pointsAwardedPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  pointsAwardedText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.textPrimary,
   },
   screen: {
     flex: 1,

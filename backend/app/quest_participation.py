@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from .supabase_client import get_client
@@ -8,6 +9,9 @@ from .supabase_client import get_client
 # profile id, standing in for "the current authenticated user" until real
 # auth is wired up.
 DEFAULT_USER_ID = "cc7f660b-1d6b-4ca9-8363-cea9e3681356"
+
+# Created manually in the Supabase dashboard, not by this code.
+PROOF_BUCKET = "quest-proofs"
 
 
 class QuestNotFound(Exception):
@@ -23,6 +27,10 @@ class QuestNotAccepted(Exception):
 
 
 class QuestNotStarted(Exception):
+    pass
+
+
+class QuestNotSubmitted(Exception):
     pass
 
 
@@ -111,6 +119,73 @@ def submit_quest(quest_id: str) -> dict:
         get_client()
         .table("quest_participants")
         .update({"status": "submitted", "progress_percent": 80})
+        .eq("quest_id", quest_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return response.data[0]
+
+
+def upload_quest_proof(
+    quest_id: str, filename: str, file_bytes: bytes, content_type: Optional[str]
+) -> dict:
+    """Upload a proof photo for an in-progress quest and mark it submitted.
+
+    Raises QuestNotFound / QuestNotStarted.
+    """
+    user_id = DEFAULT_USER_ID
+
+    participation = find_participation(quest_id, user_id)
+    if participation is None:
+        raise QuestNotFound(quest_id)
+
+    if participation["status"] != "in_progress":
+        raise QuestNotStarted(quest_id)
+
+    storage_path = f"{user_id}/{quest_id}/{filename}"
+    file_options = {"content-type": content_type} if content_type else None
+    get_client().storage.from_(PROOF_BUCKET).upload(storage_path, file_bytes, file_options)
+
+    response = (
+        get_client()
+        .table("quest_participants")
+        .update({"proof_media_path": storage_path, "status": "submitted", "progress_percent": 80})
+        .eq("quest_id", quest_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return response.data[0]
+
+
+def verify_quest(quest_id: str) -> dict:
+    """Mark a submitted quest as completed and award its points.
+
+    No admin/reviewer system exists yet — for the hackathon demo this simply
+    completes the quest outright. Raises QuestNotFound / QuestNotSubmitted.
+    """
+    user_id = DEFAULT_USER_ID
+
+    participation = find_participation(quest_id, user_id)
+    if participation is None:
+        raise QuestNotFound(quest_id)
+
+    if participation["status"] != "submitted":
+        raise QuestNotSubmitted(quest_id)
+
+    quest = fetch_quest_by_id(quest_id) or {}
+    points_reward = quest.get("points_reward") or 0
+
+    response = (
+        get_client()
+        .table("quest_participants")
+        .update(
+            {
+                "status": "completed",
+                "progress_percent": 100,
+                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "points_awarded": points_reward,
+            }
+        )
         .eq("quest_id", quest_id)
         .eq("user_id", user_id)
         .execute()
