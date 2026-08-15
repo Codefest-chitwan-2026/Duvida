@@ -20,7 +20,7 @@ function generateIssueId(): string {
 const initialFormData: Omit<IssueFormData, 'issueId'> = {
   category: 'pothole',
   description: 'Large pothole causing damage to vehicles and inconvenience.',
-  severity: 'high',
+  severity: 'low',
   location: {
     address: 'Mid Baneshwor, Kathmandu, Nepal',
     latitude: 27.71,
