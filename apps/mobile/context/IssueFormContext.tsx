@@ -15,11 +15,9 @@ function generateIssueId(): string {
   return `ISS-${yyyy}-${mm}-${dd}-${rand}`;
 }
 
-// Mock starting data so the screens match the design out of the box.
-// Nothing here is wired up to a real backend.
 const initialFormData: Omit<IssueFormData, 'issueId'> = {
   category: 'pothole',
-  description: 'Large pothole causing damage to vehicles and inconvenience.',
+  description: '',
   severity: 'low',
   location: {
     address: 'Mid Baneshwor, Kathmandu, Nepal',

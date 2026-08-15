@@ -11,7 +11,7 @@ from .supabase_client import get_client
 # this can't just be any UUID — it was minted via
 # report_submission.register_guest_reporter(), the same admin-API flow used
 # for guest report submitters.
-DEFAULT_USER_ID = "2efd6a4e-dbca-48a3-abc4-33f576db1b5a"
+DEFAULT_USER_ID = "f4e51e6c-435b-421f-9960-54341d3d76a8"
 
 # Created manually in the Supabase dashboard, not by this code.
 PROOF_BUCKET = "quest-proofs"
