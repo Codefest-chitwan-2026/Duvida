@@ -1,6 +1,10 @@
 node_modules/
 .next/
 .expo/
+.claude/
+.pytest_cache/
+__pycache__/
+*.tsbuildinfo
 dist/
 coverage/
 .env
