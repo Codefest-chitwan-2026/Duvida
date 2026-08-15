@@ -11,8 +11,6 @@ import { RecentReports } from "@/components/RecentReports";
 import { TopReporters } from "@/components/TopReporters";
 import { StatusDonut } from "@/components/StatusDonut";
 import { RecentActivities } from "@/components/RecentActivities";
-import { TodaySummary } from "@/components/TodaySummary";
-import { ImpactSummary } from "@/components/ImpactSummary";
 import type { ReportStatus } from "@/lib/data/types";
 
 function exportReportsAsCsv(reports: { id: string; title: string; category: string; ward: string; severity: string; reportedAgo: string }[]) {
@@ -44,8 +42,8 @@ export default function DashboardOverviewPage() {
   return (
     <div className="page-container">
       <div className="flex-between" style={{ marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ textAlign: "center", marginLeft: "240px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
             <h1 className="page-title">Dashboard Overview</h1>
           </div>
           <p className="page-subtitle">Review citizen reports and verified sustainability impact across your municipality.</p>
@@ -70,10 +68,7 @@ export default function DashboardOverviewPage() {
         <ReportsTrendChart trend={data.reportsTrend} />
       </div>
 
-      <div className="dashboard-grid-3col">
-        <div id="recent-reports">
-          <RecentReports reports={data.recentReports} />
-        </div>
+      <div className="dashboard-grid-3col" style={{ marginBottom: "20px" }}>
         <div id="top-reporters">
           <TopReporters reporters={data.topReporters} />
         </div>
@@ -82,14 +77,12 @@ export default function DashboardOverviewPage() {
         </div>
       </div>
 
-      <div className="dashboard-grid-3col" style={{ marginBottom: 0 }}>
-        <div id="recent-activities">
-          <RecentActivities activities={data.recentActivities} />
-        </div>
-        <TodaySummary metrics={data.todaySummary} />
-        <div id="impact-summary">
-          <ImpactSummary metrics={data.impactSummary} />
-        </div>
+      <div id="recent-reports" style={{ marginBottom: "20px" }}>
+        <RecentReports reports={data.recentReports} />
+      </div>
+
+      <div id="recent-activities" style={{ marginBottom: 0 }}>
+        <RecentActivities activities={data.recentActivities} />
       </div>
     </div>
   );

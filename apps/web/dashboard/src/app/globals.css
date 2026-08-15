@@ -32,6 +32,21 @@
   --grey-accent: #64748b;
   --grey-accent-light: rgba(100, 116, 139, 0.12);
 
+  /* Warmer, hand-picked palette for the Reported Issues card grid — an
+     earthier alternative to the stock red/amber/blue/violet set above. */
+  --clay: #b1543a;
+  --clay-light: rgba(177, 84, 58, 0.12);
+  --honey: #a5751f;
+  --honey-light: rgba(165, 117, 31, 0.12);
+  --sage: #4c7a5e;
+  --sage-light: rgba(76, 122, 94, 0.12);
+  --denim: #4f6f93;
+  --denim-light: rgba(79, 111, 147, 0.12);
+  --plum: #7d5c78;
+  --plum-light: rgba(125, 92, 120, 0.12);
+  --stone: #857a6c;
+  --stone-light: rgba(133, 122, 108, 0.12);
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -112,6 +127,42 @@ button {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background-color: rgba(185, 28, 28, 0.14);
+  color: #f87171;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.signout-btn:hover {
+  background-color: rgba(185, 28, 28, 0.28);
+  border-color: rgba(248, 113, 113, 0.6);
+  color: #fca5a5;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.15);
+}
+
+.signout-btn:active {
+  transform: scale(0.97);
+}
+
+.signout-btn:focus-visible {
+  outline: 2px solid #f87171;
+  outline-offset: 2px;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -136,13 +187,13 @@ button {
 
 .nav-item-active {
   background-color: var(--navy-elevated);
-  color: #ffffff;
+  color: var(--text-on-navy);
   font-weight: 600;
 }
 
 .nav-item-active:hover {
   background-color: var(--navy-elevated);
-  color: #ffffff;
+  color: var(--text-on-navy);
 }
 
 .nav-item-disabled {
@@ -163,6 +214,8 @@ button {
 }
 
 .page-container {
+  max-width: 1440px;
+  margin: 0 auto;
   padding: 28px 32px 40px;
 }
 
@@ -215,6 +268,9 @@ button {
   display: flex;
   align-items: center;
   gap: 20px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
 }
 
 .btn-sm {
@@ -278,6 +334,86 @@ button {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* Reported Issues */
+.report-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  max-height: clamp(480px, 70vh, 780px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.report-card:hover {
+  border-color: var(--border-color-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.report-card-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface-muted);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.report-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.report-card-title {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.report-card-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.report-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.report-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Controls */

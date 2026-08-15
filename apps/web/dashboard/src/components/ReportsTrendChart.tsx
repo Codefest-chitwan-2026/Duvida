@@ -18,7 +18,14 @@ export function ReportsTrendChart({ trend }: { trend: ReportsTrend }) {
               Current period
             </span>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "14px", height: "3px", borderRadius: "2px", backgroundColor: "var(--grey-accent)", display: "inline-block" }} />
+              <span
+                style={{
+                  width: "14px",
+                  height: "2px",
+                  display: "inline-block",
+                  backgroundImage: "repeating-linear-gradient(to right, var(--grey-accent) 0, var(--grey-accent) 4px, transparent 4px, transparent 7px)",
+                }}
+              />
               Previous period
             </span>
           </div>

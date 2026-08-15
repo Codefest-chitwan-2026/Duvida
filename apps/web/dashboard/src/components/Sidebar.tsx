@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -13,6 +13,7 @@ import {
   Megaphone,
   Settings,
   Building2,
+  LogOut,
 } from "lucide-react";
 
 // Everything lives on the single dashboard page today, so nav items point at
@@ -30,7 +31,10 @@ const NAV_ITEMS: { id: string; href: string; label: string; icon: typeof LayoutD
 ];
 
 export function Sidebar({ organizationName }: { organizationName: string }) {
-  const pathname = usePathname();
+  // All nav items live on the same page (home route or in-page anchors), so
+  // pathname never changes between them — track the active item by click
+  // instead, and start with nothing selected until the user picks one.
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   return (
     <aside className="sidebar">
@@ -78,7 +82,7 @@ export function Sidebar({ organizationName }: { organizationName: string }) {
 
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.enabled && (pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
+          const isActive = item.enabled && activeId === item.id;
           const Icon = item.icon;
 
           const content = (
@@ -101,7 +105,7 @@ export function Sidebar({ organizationName }: { organizationName: string }) {
           }
 
           return (
-            <Link key={item.id} href={item.href} className={className}>
+            <Link key={item.id} href={item.href} className={className} onClick={() => setActiveId(item.id)}>
               {content}
             </Link>
           );
@@ -132,6 +136,11 @@ export function Sidebar({ organizationName }: { organizationName: string }) {
             <p style={{ fontSize: "0.72rem", color: "var(--text-on-navy-muted)" }}>{organizationName}</p>
           </div>
         </div>
+
+        <button type="button" className="signout-btn" title="Sign out">
+          <LogOut size={16} />
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );
