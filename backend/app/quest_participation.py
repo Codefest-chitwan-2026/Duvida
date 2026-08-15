@@ -22,6 +22,10 @@ class QuestNotAccepted(Exception):
     pass
 
 
+class QuestNotStarted(Exception):
+    pass
+
+
 def fetch_quest_by_id(quest_id: str) -> Optional[dict]:
     response = get_client().table("quests").select("*").eq("id", quest_id).limit(1).execute()
     return response.data[0] if response.data else None
@@ -72,6 +76,41 @@ def start_quest(quest_id: str) -> dict:
         get_client()
         .table("quest_participants")
         .update({"status": "in_progress", "progress_percent": 50})
+        .eq("quest_id", quest_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return response.data[0]
+
+
+def find_participation(quest_id: str, user_id: str) -> Optional[dict]:
+    response = (
+        get_client()
+        .table("quest_participants")
+        .select("*")
+        .eq("quest_id", quest_id)
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    return response.data[0] if response.data else None
+
+
+def submit_quest(quest_id: str) -> dict:
+    """Submit an in-progress quest for review. Raises QuestNotFound / QuestNotStarted."""
+    user_id = DEFAULT_USER_ID
+
+    participation = find_participation(quest_id, user_id)
+    if participation is None:
+        raise QuestNotFound(quest_id)
+
+    if participation["status"] != "in_progress":
+        raise QuestNotStarted(quest_id)
+
+    response = (
+        get_client()
+        .table("quest_participants")
+        .update({"status": "submitted", "progress_percent": 80})
         .eq("quest_id", quest_id)
         .eq("user_id", user_id)
         .execute()

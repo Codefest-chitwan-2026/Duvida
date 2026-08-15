@@ -16,9 +16,11 @@ from .quest_participation import (
     AlreadyJoined,
     QuestNotAccepted,
     QuestNotFound,
+    QuestNotStarted,
     accept_quest,
     fetch_my_quests,
     start_quest,
+    submit_quest,
 )
 from .retrieval import format_retrieved_chunks, retrieve
 from .schemas import ChatReply, ChatRequest, CommunityIssue, MyQuest
@@ -108,5 +110,17 @@ def start_quest_endpoint(quest_id: str):
         return start_quest(quest_id)
     except QuestNotAccepted as exc:
         raise HTTPException(status_code=404, detail="Quest not accepted yet") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+
+@app.post("/quests/{quest_id}/submit")
+def submit_quest_endpoint(quest_id: str):
+    try:
+        return submit_quest(quest_id)
+    except QuestNotFound as exc:
+        raise HTTPException(status_code=404, detail="Quest not found") from exc
+    except QuestNotStarted as exc:
+        raise HTTPException(status_code=409, detail="Quest must be in progress before submitting") from exc
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc

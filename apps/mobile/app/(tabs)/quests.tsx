@@ -28,14 +28,15 @@ function formatStatus(status: string): string {
     .join(" ");
 }
 
-type StartState = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string };
+type ActionState = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string };
 
 export default function QuestsScreen() {
   const insets = useSafeAreaInsets();
   const [myQuests, setMyQuests] = useState<MyQuest[]>([]);
   const [myQuestsLoading, setMyQuestsLoading] = useState(false);
   const [myQuestsError, setMyQuestsError] = useState<string | null>(null);
-  const [startStateByQuestId, setStartStateByQuestId] = useState<Record<string, StartState>>({});
+  const [startStateByQuestId, setStartStateByQuestId] = useState<Record<string, ActionState>>({});
+  const [submitStateByQuestId, setSubmitStateByQuestId] = useState<Record<string, ActionState>>({});
 
   const fetchMyQuests = async () => {
     setMyQuestsLoading(true);
@@ -73,6 +74,21 @@ export default function QuestsScreen() {
     }
   };
 
+  const submitQuest = async (questId: string) => {
+    setSubmitStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "loading" } }));
+    try {
+      const response = await fetch(`${env.advisorApiUrl}/quests/${questId}/submit`, { method: "POST" });
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      setSubmitStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "idle" } }));
+      await fetchMyQuests();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      setSubmitStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "error", message } }));
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -102,6 +118,8 @@ export default function QuestsScreen() {
             quest={quest}
             startState={startStateByQuestId[quest.quest_id] ?? { kind: "idle" }}
             onStartQuest={() => startQuest(quest.quest_id)}
+            submitState={submitStateByQuestId[quest.quest_id] ?? { kind: "idle" }}
+            onSubmitQuest={() => submitQuest(quest.quest_id)}
           />
         ))}
 
@@ -118,10 +136,14 @@ function MyQuestCard({
   quest,
   startState,
   onStartQuest,
+  submitState,
+  onSubmitQuest,
 }: {
   quest: MyQuest;
-  startState: StartState;
+  startState: ActionState;
   onStartQuest: () => void;
+  submitState: ActionState;
+  onSubmitQuest: () => void;
 }) {
   return (
     <View style={styles.myQuestCard}>
@@ -157,7 +179,22 @@ function MyQuestCard({
         </Pressable>
       )}
 
+      {quest.participation_status === "in_progress" && (
+        <Pressable
+          style={styles.startQuestButton}
+          onPress={onSubmitQuest}
+          disabled={submitState.kind === "loading"}
+        >
+          {submitState.kind === "loading" ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.startQuestButtonText}>Submit Completion</Text>
+          )}
+        </Pressable>
+      )}
+
       {startState.kind === "error" && <Text style={styles.myQuestsErrorText}>{startState.message}</Text>}
+      {submitState.kind === "error" && <Text style={styles.myQuestsErrorText}>{submitState.message}</Text>}
     </View>
   );
 }

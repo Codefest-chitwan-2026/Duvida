@@ -13,9 +13,11 @@ from app.quest_participation import (
     AlreadyJoined,
     QuestNotAccepted,
     QuestNotFound,
+    QuestNotStarted,
     accept_quest,
     fetch_my_quests,
     start_quest,
+    submit_quest,
 )
 
 client = TestClient(app)
@@ -29,10 +31,15 @@ def _mock_supabase_client(
     already_joined: bool,
     inserted_row: dict | None = None,
     updated_row: dict | None = None,
+    participation_row: dict | None = None,
 ):
     """Fake supabase client. Returns (client, quests_table_mock, participants_table_mock)
     so tests can assert on exactly what was called, since .table() always returns the
-    same mock per table name (not a fresh one each call)."""
+    same mock per table name (not a fresh one each call).
+
+    participation_row, if given, overrides what the participants select().eq().eq()
+    chain returns (used by find_participation / submit_quest) — otherwise it falls
+    back to the already_joined boolean (used by has_already_joined)."""
     quests_table = MagicMock()
     participants_table = MagicMock()
 
@@ -46,8 +53,12 @@ def _mock_supabase_client(
         [{"id": QUEST_ID, "title": "Some quest"}] if quest_exists else []
     )
 
+    if participation_row is not None:
+        select_data = [participation_row]
+    else:
+        select_data = [{"id": "existing-participation"}] if already_joined else []
     participants_table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value.data = (
-        [{"id": "existing-participation"}] if already_joined else []
+        select_data
     )
 
     participants_table.insert.return_value.execute.return_value.data = [inserted_row] if inserted_row else []
@@ -180,6 +191,82 @@ def test_start_quest_endpoint_not_accepted():
 def test_start_quest_endpoint_supabase_error():
     with patch("app.main.start_quest", side_effect=RuntimeError("boom")):
         response = client.post(f"/quests/{QUEST_ID}/start")
+        assert response.status_code == 503
+
+
+def test_submit_quest_success():
+    updated_row = {
+        "id": "existing-participation",
+        "quest_id": QUEST_ID,
+        "user_id": DEFAULT_USER_ID,
+        "status": "submitted",
+        "progress_percent": 80,
+    }
+    mock_client, _, participants_table = _mock_supabase_client(
+        quest_exists=True,
+        already_joined=True,
+        participation_row={"id": "existing-participation", "status": "in_progress"},
+        updated_row=updated_row,
+    )
+
+    with patch("app.quest_participation.get_client", return_value=mock_client):
+        result = submit_quest(QUEST_ID)
+
+    assert result == updated_row
+    participants_table.update.assert_called_once_with({"status": "submitted", "progress_percent": 80})
+    update_eq_chain = participants_table.update.return_value.eq
+    update_eq_chain.assert_called_once_with("quest_id", QUEST_ID)
+    update_eq_chain.return_value.eq.assert_called_once_with("user_id", DEFAULT_USER_ID)
+
+
+def test_submit_quest_raises_when_not_found():
+    mock_client, _, participants_table = _mock_supabase_client(
+        quest_exists=True, already_joined=False, participation_row=None
+    )
+    with patch("app.quest_participation.get_client", return_value=mock_client):
+        with pytest.raises(QuestNotFound):
+            submit_quest(QUEST_ID)
+    participants_table.update.assert_not_called()
+
+
+@pytest.mark.parametrize("bad_status", ["joined", "submitted", "completed", "verified", "abandoned"])
+def test_submit_quest_raises_when_not_in_progress(bad_status):
+    mock_client, _, participants_table = _mock_supabase_client(
+        quest_exists=True,
+        already_joined=True,
+        participation_row={"id": "existing-participation", "status": bad_status},
+    )
+    with patch("app.quest_participation.get_client", return_value=mock_client):
+        with pytest.raises(QuestNotStarted):
+            submit_quest(QUEST_ID)
+    participants_table.update.assert_not_called()
+
+
+def test_submit_quest_endpoint_success():
+    participation = {"id": "existing-participation", "status": "submitted", "progress_percent": 80}
+    with patch("app.main.submit_quest", return_value=participation) as mock_submit:
+        response = client.post(f"/quests/{QUEST_ID}/submit")
+
+        assert response.status_code == 200
+        assert response.json() == participation
+        mock_submit.assert_called_once_with(QUEST_ID)
+
+
+def test_submit_quest_endpoint_not_found():
+    with patch("app.main.submit_quest", side_effect=QuestNotFound(QUEST_ID)):
+        response = client.post(f"/quests/{QUEST_ID}/submit")
+        assert response.status_code == 404
+
+
+def test_submit_quest_endpoint_not_started():
+    with patch("app.main.submit_quest", side_effect=QuestNotStarted(QUEST_ID)):
+        response = client.post(f"/quests/{QUEST_ID}/submit")
+        assert response.status_code == 409
+
+
+def test_submit_quest_endpoint_supabase_error():
+    with patch("app.main.submit_quest", side_effect=RuntimeError("boom")):
+        response = client.post(f"/quests/{QUEST_ID}/submit")
         assert response.status_code == 503
 
 
