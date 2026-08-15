@@ -130,18 +130,37 @@ export interface IssueDetail {
   status: string;
   upvotesCount: number;
   createdAt: string;
+  hasSupported: boolean;
 }
 
 export async function getIssueById(issueId: string): Promise<IssueDetail> {
-  const { data: issue, error } = await supabase
-    .from("issues")
-    .select("id, title, description, address, status, upvotes_count, created_at")
-    .eq("id", issueId)
-    .is("deleted_at", null)
-    .single();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [{ data: issue, error }, { data: upvote, error: upvoteError }] = await Promise.all([
+    supabase
+      .from("issues")
+      .select("id, title, description, address, status, upvotes_count, created_at")
+      .eq("id", issueId)
+      .is("deleted_at", null)
+      .single(),
+    user
+      ? supabase
+          .from("issue_upvotes")
+          .select("id")
+          .eq("issue_id", issueId)
+          .eq("user_id", user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
 
   if (error || !issue) {
     throw new Error(`Could not load report: ${error?.message ?? "not found"}`);
+  }
+
+  if (upvoteError) {
+    throw new Error(`Could not load support status: ${upvoteError.message}`);
   }
 
   return {
@@ -152,6 +171,7 @@ export async function getIssueById(issueId: string): Promise<IssueDetail> {
     status: issue.status,
     upvotesCount: issue.upvotes_count,
     createdAt: issue.created_at,
+    hasSupported: !!upvote,
   };
 }
 
@@ -221,6 +241,27 @@ export async function supportExistingIssue(issueId: string) {
 
   if (error) {
     throw new Error(`Could not support this report: ${error.message}`);
+  }
+}
+
+export async function removeSupportForIssue(issueId: string) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("Please sign in before removing your support.");
+  }
+
+  const { error } = await supabase
+    .from("issue_upvotes")
+    .delete()
+    .eq("issue_id", issueId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw new Error(`Could not remove your support: ${error.message}`);
   }
 }
 

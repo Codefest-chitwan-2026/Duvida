@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "@/theme/colors";
 
-export type TabKey = "home" | "quests" | "wallet" | "advisor" | "profile";
+export type TabKey = "home" | "quests" | "wallet" | "profile";
 
 type BottomNavBarProps = {
   active: TabKey;
@@ -16,7 +16,6 @@ const TABS: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap }
   { key: "home", label: "Map", icon: "map" },
   { key: "quests", label: "Quests", icon: "trophy" },
   { key: "wallet", label: "Wallet", icon: "wallet" },
-  { key: "advisor", label: "EcoBot", icon: "chatbubble-ellipses" },
   { key: "profile", label: "Profile", icon: "person" },
 ];
 

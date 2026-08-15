@@ -99,7 +99,7 @@ Not a bottom tab — entry points are QuestListScreen and/or an assistant button
 | RewardsScreen | `app/(tabs)/wallet.tsx` (rename/relabel candidate) or new `app/(tabs)/rewards.tsx` | 🚧 total points/XP/badges/achievements/leaderboard not yet broken out |
 | WalletScreen | `app/(tabs)/wallet/history.tsx` (if `wallet.tsx` becomes the Rewards landing screen) | 🚧 current `wallet.tsx` covers today's balance display; transaction history view is ⬜ |
 
-Points/tokens are in-app XP-style rewards for this build, not crypto or guaranteed real money — keep that framing in any UI copy.
+Points/vouchers are in-app XP-style rewards for this build, not crypto or guaranteed real money — keep that framing in any UI copy.
 
 ## 6. Profile flow
 

@@ -10,6 +10,7 @@ import {
   formatIssueReference,
   formatRelativeTime,
   getIssueById,
+  removeSupportForIssue,
   supportExistingIssue,
   type IssueDetail,
 } from '../../src/lib/issueSubmission';
@@ -76,6 +77,31 @@ export default function ExistingIssueScreen() {
     }
   };
 
+  const handleRemoveSupport = async () => {
+    if (!existingIssueId) {
+      setError('Missing report reference — please go back and try again.');
+      return;
+    }
+
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      await removeSupportForIssue(existingIssueId);
+      setIssue((current) =>
+        current
+          ? { ...current, hasSupported: false, upvotesCount: Math.max(current.upvotesCount - 1, 0) }
+          : current
+      );
+    } catch (removeError) {
+      setError(
+        removeError instanceof Error ? removeError.message : 'Unable to remove your support right now.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmitAsNew = () => {
     router.replace('/report-issue/review');
   };
@@ -132,11 +158,22 @@ export default function ExistingIssueScreen() {
       )}
 
       <View style={styles.footer}>
-        <Button
-          label={submitting ? 'Supporting…' : 'Confirm & Support This Report'}
-          onPress={handleConfirmExisting}
-          disabled={submitting || loading || !issue}
-        />
+        {issue?.hasSupported ? (
+          <Button
+            label={submitting ? 'Removing…' : 'Remove Support'}
+            variant="outline"
+            onPress={handleRemoveSupport}
+            disabled={submitting || loading}
+            style={styles.removeSupportButton}
+            textStyle={styles.removeSupportButtonLabel}
+          />
+        ) : (
+          <Button
+            label={submitting ? 'Supporting…' : 'Confirm & Support This Report'}
+            onPress={handleConfirmExisting}
+            disabled={submitting || loading || !issue}
+          />
+        )}
         <Button
           label="Submit as a New Issue Anyway"
           variant="outline"
@@ -199,6 +236,12 @@ const styles = StyleSheet.create({
   },
   outlineButton: {
     borderColor: colors.primaryGreen,
+  },
+  removeSupportButton: {
+    borderColor: colors.red,
+  },
+  removeSupportButtonLabel: {
+    color: colors.red,
   },
   outlineButtonLabel: {
     color: colors.primaryGreen,

@@ -7,7 +7,6 @@ const PATH_TO_TAB: Record<string, TabKey> = {
   "/": "home",
   "/quests": "quests",
   "/wallet": "wallet",
-  "/advisor": "advisor",
   "/profile": "profile",
 };
 
@@ -15,7 +14,6 @@ const TAB_TO_PATH: Record<TabKey, string> = {
   home: "/",
   quests: "/quests",
   wallet: "/wallet",
-  advisor: "/advisor",
   profile: "/profile",
 };
 

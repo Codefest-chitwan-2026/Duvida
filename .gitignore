@@ -11,3 +11,5 @@ gradle.properties
 .DS_Store
 supabase/.branches/
 supabase/.temp/
+*.tsbuildinfo
+*.bak

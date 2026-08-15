@@ -83,7 +83,7 @@ export function SubmitProofScreen({ quest, coinBalance }: SubmitProofScreenProps
               <View style={styles.questStat}>
                 <MaterialCommunityIcons name="hexagon" size={14} color={colors.coinGold} />
                 <Text style={styles.questStatValue}>{quest.tokens}</Text>
-                <Text style={styles.questStatLabel}>Tokens</Text>
+                <Text style={styles.questStatLabel}>Vouchers</Text>
               </View>
               <View style={styles.questStat}>
                 <Ionicons name="people" size={14} color={colors.textMuted} />

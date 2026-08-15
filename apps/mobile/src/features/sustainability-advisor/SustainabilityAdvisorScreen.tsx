@@ -46,7 +46,7 @@ const initialMessages: Message[] = [
     id: "user-token-question",
     sender: "user",
     time: "Today 10:30 AM",
-    text: "How can I earn more tokens quickly?",
+    text: "How can I earn more vouchers quickly?",
   },
   {
     id: "bot-token-answer",
@@ -54,7 +54,7 @@ const initialMessages: Message[] = [
     time: "10:30 AM",
     body: {
       kind: "numbered",
-      intro: "Great question! Here are the fastest ways to earn tokens:",
+      intro: "Great question! Here are the fastest ways to earn vouchers:",
       items: [
         "Report real issues in your area with clear photos.",
         "Complete community quests and challenges.",
@@ -98,8 +98,8 @@ const quickReplies: QuickReply[] = [
   },
   {
     icon: "star-outline",
-    label: "Earn tokens",
-    prompt: "How can I earn more tokens quickly?",
+    label: "Earn vouchers",
+    prompt: "How can I earn more vouchers quickly?",
   },
   {
     icon: "location-outline",

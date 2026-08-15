@@ -44,7 +44,7 @@ const PROFILE = {
 const STATS: ProfileStat[] = [
   { label: "Quests", value: "27", icon: "document-text-outline", color: "#07833D" },
   { label: "Verified", value: "36", icon: "shield-checkmark-outline", color: "#2563EB" },
-  { label: "Tokens", value: "2,450", icon: "star", color: colors.coinGold },
+  { label: "Vouchers", value: "2,450", icon: "star", color: colors.coinGold },
   { label: "Impact Score", value: "1,285", icon: "leaf-outline", color: "#07833D" },
 ];
 

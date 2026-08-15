@@ -37,7 +37,7 @@ const initialMessages: Message[] = [
     id: 'u1',
     sender: 'user',
     time: 'Today 10:30 AM',
-    text: 'How can I earn more tokens quickly?',
+    text: 'How can I earn more vouchers quickly?',
   },
   {
     id: 'b1',
@@ -45,7 +45,7 @@ const initialMessages: Message[] = [
     time: '10:30 AM',
     body: {
       kind: 'numbered',
-      intro: 'Great question! Here are the fastest ways to earn tokens:',
+      intro: 'Great question! Here are the fastest ways to earn vouchers:',
       items: [
         'Report real issues in your area with clear photos.',
         'Complete community quests and challenges.',
@@ -83,14 +83,14 @@ const initialMessages: Message[] = [
 
 const introChips: QuickReply[] = [
   { icon: 'leaf-outline', label: 'Sustainability Tips' },
-  { icon: 'ellipse-outline', label: 'How Tokens Work' },
+  { icon: 'ellipse-outline', label: 'How Vouchers Work' },
   { icon: 'location-outline', label: 'Report Help' },
 ];
 
 const followUpChips: QuickReply[] = [
   { icon: 'leaf-outline', label: 'More Tips' },
   { icon: 'trophy-outline', label: 'Quest Suggestions' },
-  { icon: 'ellipse-outline', label: 'How Tokens Work' },
+  { icon: 'ellipse-outline', label: 'How Vouchers Work' },
   { icon: 'location-outline', label: 'Help' },
 ];
 
@@ -234,7 +234,7 @@ export default function SustainabilityAdvisorScreen({
             </Text>
             <Text style={styles.introBody}>
               I'm your AI sustainability advisor. Ask me anything about eco-friendly living,
-              community impact, or how to earn more tokens!
+              community impact, or how to earn more vouchers!
             </Text>
           </View>
         </View>

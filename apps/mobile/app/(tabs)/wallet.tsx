@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from "@/components/PlaceholderScreen";
+import { WalletScreen as Wallet } from "@/features/wallet/WalletScreen";
 
 export default function WalletScreen() {
-  return <PlaceholderScreen title="Wallet" subtitle="Points, badges, and reward history land here." />;
+  return <Wallet />;
 }
