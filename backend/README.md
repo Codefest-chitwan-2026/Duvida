@@ -7,6 +7,9 @@ FastAPI service for EcoBot in `apps/mobile`. It provides:
 - PDF, DOCX, and TXT document loading;
 - overlapping document chunks and sentence-transformer embeddings;
 - persistent ChromaDB retrieval for document-grounded answers;
+- active community-issue lookup from Supabase;
+- Gemini-powered quest generation from reported issues;
+- quest participation and duplicate-join protection;
 - optional quest suggestions returned with each answer.
 
 ## Setup
@@ -19,8 +22,9 @@ backend\venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 Copy-Item backend\.env.example backend\.env
 ```
 
-Add a valid `GEMINI_API_KEY` to `backend/.env`. The local static responses do
-not call Gemini, but unmatched questions require the key.
+Add `GEMINI_API_KEY`, `SUPABASE_URL`, and `SUPABASE_KEY` to `backend/.env`.
+The local static responses do not call Gemini or Supabase, but unmatched
+questions and community quest features require those services.
 
 ## Add knowledge and build the retrieval index
 
@@ -52,6 +56,9 @@ computer.
 - `GET /health` returns service status and loaded knowledge character count.
 - `POST /chat` accepts `{"message": "..."}` and returns
   `{"answer": "...", "quests": [{"title": "...", "description": "..."}]}`.
+- `GET /community/issues` returns active, non-deleted Supabase issues.
+- `POST /community/issues/{issue_id}/generate-quest` creates and stores an AI quest.
+- `POST /quests/{quest_id}/accept` joins the current user to a generated quest.
 
 ## Tests
 
