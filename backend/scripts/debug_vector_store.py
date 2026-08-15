@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the Chroma index from the existing chunks/embeddings and print a summary."""
+"""Build the Chroma index from the existing chunks/embeddings and print a summary. Debug only."""
 import sys
 from pathlib import Path
 

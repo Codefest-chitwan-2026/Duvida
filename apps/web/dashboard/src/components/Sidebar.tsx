@@ -25,7 +25,7 @@ const NAV_ITEMS: { id: string; href: string; label: string; icon: typeof LayoutD
   { id: "users", href: "/#top-reporters", label: "Users", icon: Users, enabled: true },
   { id: "verifications", href: "/#status-breakdown", label: "Verifications", icon: ShieldCheck, enabled: true },
   { id: "analytics", href: "/#analytics-section", label: "Analytics", icon: BarChart3, enabled: true },
-  { id: "rewards-tokens", href: "/#impact-summary", label: "Rewards & Tokens", icon: Gift, enabled: true },
+  { id: "rewards-tokens", href: "/#impact-summary", label: "Rewards & Vouchers", icon: Gift, enabled: true },
   { id: "announcements", href: "/#recent-activities", label: "Announcements", icon: Megaphone, enabled: true },
   { id: "settings", href: "/", label: "Settings", icon: Settings, enabled: true },
 ];

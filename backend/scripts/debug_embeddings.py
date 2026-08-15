@@ -11,7 +11,9 @@ from app.embeddings import embed_texts
 
 def main() -> None:
     chunks = chunk_documents()
-    embeddings = embed_texts([chunk.text for chunk in chunks])
+    texts = [chunk.text for chunk in chunks]
+
+    embeddings = embed_texts(texts)
 
     print(f"num_chunks_embedded={len(embeddings)}")
     if embeddings:

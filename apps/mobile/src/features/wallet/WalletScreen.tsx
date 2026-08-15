@@ -91,7 +91,7 @@ const TRANSACTIONS: Transaction[] = [
   },
   {
     id: "gift-card",
-    title: "Token Redeemed",
+    title: "Voucher Redeemed",
     detail: "Community Store Voucher",
     amount: "-300",
     date: "3 days ago",
@@ -103,7 +103,7 @@ const TRANSACTIONS: Transaction[] = [
   {
     id: "top-up",
     title: "Top Up",
-    detail: "Purchased 1,000 Tokens",
+    detail: "Purchased 1,000 Vouchers",
     amount: "+1,000",
     date: "5 days ago",
     icon: "add",
@@ -130,9 +130,9 @@ export function WalletScreen() {
     }
 
     const messages = {
-      send: "Secure token transfers will be available once wallet verification is connected.",
+      send: "Secure voucher transfers will be available once wallet verification is connected.",
       redeem: "The rewards marketplace is being prepared for your community.",
-      "top-up": "Token top-ups will be available after payment setup is complete.",
+      "top-up": "Voucher top-ups will be available after payment setup is complete.",
     } as const;
 
     Alert.alert(action === "top-up" ? "Top Up" : action[0].toUpperCase() + action.slice(1), messages[action]);
@@ -160,14 +160,14 @@ export function WalletScreen() {
             >
               <Ionicons name="arrow-back" size={26} color={colors.textPrimary} />
             </Pressable>
-            <Text style={styles.headerTitle}>Token Wallet</Text>
+            <Text style={styles.headerTitle}>Voucher Wallet</Text>
             <Pressable
               accessibilityLabel="Wallet help"
               hitSlop={10}
               onPress={() =>
                 Alert.alert(
-                  "Everest Tokens",
-                  "Earn tokens by completing quests and submitting verified community reports. Redeem them for community rewards."
+                  "Everest Vouchers",
+                  "Earn vouchers by completing quests and submitting verified community reports. Redeem them for community rewards."
                 )
               }
               style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
@@ -202,7 +202,7 @@ export function WalletScreen() {
                   2,450
                 </Text>
               </View>
-              <Text style={styles.balanceUnit}>Everest Tokens</Text>
+              <Text style={styles.balanceUnit}>Everest Vouchers</Text>
             </View>
 
             <View style={styles.actionRow}>
@@ -264,7 +264,7 @@ export function WalletScreen() {
               <Ionicons name="leaf" size={28} color={colors.card} />
             </View>
             <View style={styles.earnCopy}>
-              <Text style={styles.earnTitle}>Earn more tokens!</Text>
+              <Text style={styles.earnTitle}>Earn more vouchers!</Text>
               <Text style={styles.earnText}>
                 Complete quests, verify reports, and take sustainability challenges.
               </Text>
@@ -324,7 +324,7 @@ function TransactionRow({
       onPress={() =>
         Alert.alert(
           transaction.title,
-          `${transaction.detail}\n${transaction.amount} Everest Tokens\n${transaction.date}`
+          `${transaction.detail}\n${transaction.amount} Everest Vouchers\n${transaction.date}`
         )
       }
       style={({ pressed }) => [

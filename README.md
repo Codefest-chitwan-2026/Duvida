@@ -1,52 +1,50 @@
 # Team Duvidha — Sustainable Community Digital Twin
 
-Monorepo for the citizen mobile app, authority admin dashboard, and shared Supabase backend.
+Monorepo for the citizen mobile app, municipal web tools, EcoBot backend, and shared application contracts.
 
-## MVP flow
-
-1. A citizen signs in on the mobile app.
-2. They submit a report with category, description, severity, GPS coordinates, and media.
-3. Supabase stores the report and evidence.
-4. The admin dashboard receives the report and lets an authority verify, reject, assign, or resolve it.
-5. Both clients receive status changes through Supabase Realtime.
-
-## Repository layout
+## Project structure
 
 ```text
 apps/
-  admin/                 Next.js authority dashboard
-  mobile/                Expo / React Native citizen app
+  mobile/                 Expo Router citizen application
+  web/
+    admin/                Authority operations dashboard
+    dashboard/            Municipal analytics dashboard
+backend/                  FastAPI EcoBot and quest-generation service
 packages/
-  shared/                Shared types, validation, constants, and utilities
-supabase/
-  migrations/            PostgreSQL schema, RLS policies, indexes, and triggers
-  functions/             Edge Functions (duplicate detection, notifications, metrics)
-docs/
-  architecture.md        System boundaries and data flow
-  roadmap.md             MVP-first delivery plan
+  shared/                 Shared types, constants, mock data, and utilities
+docs/                     Architecture notes and project documentation
 ```
 
-## Getting started
+The mobile and web sections are independent applications. Shared application code belongs in `packages/shared`, while EcoBot and server-side integrations belong in `backend`.
 
-Prerequisites: Node.js 20+, pnpm 9+, Expo tooling, and Supabase CLI.
+## Development
 
-```bash
+Install all workspace dependencies from the repository root:
+
+```powershell
 pnpm install
-cp .env.example .env
-supabase start
-supabase db reset
 ```
 
-Then scaffold the two clients inside the prepared directories (Next.js in `apps/admin`, Expo Router in `apps/mobile`) and add their normal `dev` scripts. The repository intentionally establishes the architecture and backend contract before committing generated framework boilerplate.
+Run an application independently:
 
-Create app-specific environment files from the examples in `apps/admin` and `apps/mobile`. Use the Supabase **anon key** in clients. Never expose the service-role key in either app.
+```powershell
+pnpm dev:mobile
+pnpm dev:admin
+pnpm dev:dashboard
+```
 
-## Initial work order
+Run all applications together:
 
-- Connect authentication and role-aware profiles.
-- Implement mobile report creation and media upload.
-- Implement dashboard report queue and status updates.
-- Subscribe both clients to report changes.
-- Add duplicate detection after the basic reporting loop is reliable.
+```powershell
+pnpm dev
+```
 
-See [docs/architecture.md](docs/architecture.md) and [docs/roadmap.md](docs/roadmap.md).
+## Main application flow
+
+1. Citizens use the mobile app to report issues, complete quests, and talk to EcoBot.
+2. The FastAPI backend supplies EcoBot advice, retrieval, community issues, and generated quests.
+3. Authority users review and manage reports through the web applications.
+4. Shared types and constants keep the clients aligned.
+
+Keep secrets in the ignored environment files for each application. Do not commit service-role or Gemini API keys.

@@ -84,7 +84,7 @@ export default function QuestsModerationPage() {
         <div>
           <h1 className="page-title">Citizen Quests & Proof Moderation</h1>
           <p className="page-subtitle" style={{ marginBottom: 0 }}>
-            Audit participatory civic missions, approve photographic proofs, and issue tokenized green incentives.
+            Audit participatory civic missions, approve photographic proofs, and issue voucher-based green incentives.
           </p>
         </div>
         <button className="btn btn-primary">
