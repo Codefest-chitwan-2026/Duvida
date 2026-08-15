@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,11 +16,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Header from '../../components/common/Header';
 import Button from '../../components/common/Button';
 import IssueProgress from '../../components/issue/IssueProgress';
+import LocationPickerModal from '../../components/issue/LocationPickerModal';
 import { useIssueForm } from '../../hooks/useIssueForm';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
-import { SeverityLevel } from '../../types/issue';
+import { IssueLocation, SeverityLevel } from '../../types/issue';
 
 type SeverityIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -71,12 +71,18 @@ function formatCompactAddress(address: string): string {
 
 export default function DetailsScreen() {
   const router = useRouter();
-  const { formData, updateDescription, selectSeverity } = useIssueForm();
+  const { formData, updateDescription, selectSeverity, updateLocation } = useIssueForm();
+  const [pickerVisible, setPickerVisible] = useState(false);
+
   const compactAddress = formatCompactAddress(formData.location.address);
   const coordinates = `Lat ${formData.location.latitude.toFixed(4)}, Long ${formData.location.longitude.toFixed(4)}`;
 
   const handleLocationPress = () => {
-    Alert.alert('Coming Soon', 'Location selection coming soon.');
+    setPickerVisible(true);
+  };
+
+  const handleSelectLocation = (newLoc: IssueLocation) => {
+    updateLocation(newLoc);
   };
 
   return (
@@ -98,7 +104,14 @@ export default function DetailsScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.sectionTitle}>Location</Text>
+            <View style={styles.locationHeaderRow}>
+              <Text style={styles.sectionTitle}>Location</Text>
+              <View style={styles.geofenceTag}>
+                <MaterialCommunityIcons name="map-marker-radius" size={13} color="#047857" />
+                <Text style={styles.geofenceTagText}>Max 100m Range</Text>
+              </View>
+            </View>
+
             <TouchableOpacity
               style={styles.locationCard}
               onPress={handleLocationPress}
@@ -133,7 +146,8 @@ export default function DetailsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Change location"
             >
-              <Text style={styles.changeLocationText}>Change location</Text>
+              <MaterialCommunityIcons name="crosshairs-gps" size={16} color={colors.primaryGreen} />
+              <Text style={styles.changeLocationText}>Change Location (GPS or Map)</Text>
             </TouchableOpacity>
 
             <Text style={[styles.sectionTitle, styles.descriptionTitle]}>Description</Text>
@@ -206,6 +220,13 @@ export default function DetailsScreen() {
             style={styles.footerButton}
           />
         </View>
+
+        <LocationPickerModal
+          visible={pickerVisible}
+          currentLocation={formData.location}
+          onClose={() => setPickerVisible(false)}
+          onSelectLocation={handleSelectLocation}
+        />
       </SafeAreaView>
     </View>
   );
@@ -236,12 +257,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
   },
-  sectionTitle: {
+  locationHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: spacing.lg,
     marginBottom: spacing.md,
+  },
+  sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
     color: colors.textPrimary,
+  },
+  geofenceTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  geofenceTagText: {
+    fontSize: 11,
+    fontWeight: fontWeight.bold,
+    color: '#047857',
   },
   locationCard: {
     minHeight: 78,
@@ -283,8 +325,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   changeLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     alignSelf: 'flex-start',
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   changeLocationText: {
     fontSize: fontSize.sm,

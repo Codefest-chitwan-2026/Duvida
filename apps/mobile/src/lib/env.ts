@@ -3,7 +3,7 @@ const DEFAULT_ADVISOR_API_URL = "http://127.0.0.1:8000";
 
 export const env = {
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-  supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "",
+  supabasePublishableKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
   mapboxAccessToken: process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "",
   mapboxStyleUrl: process.env.EXPO_PUBLIC_MAPBOX_STYLE_URL ?? DEFAULT_MAPBOX_STYLE_URL,
   advisorApiUrl: (process.env.EXPO_PUBLIC_API_BASE_URL ?? DEFAULT_ADVISOR_API_URL).replace(

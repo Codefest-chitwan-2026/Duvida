@@ -27,6 +27,7 @@ const initialFormData: Omit<IssueFormData, 'issueId'> = {
     longitude: 85.33,
   },
   media: [],
+  submittedAt: undefined,
 };
 
 interface IssueFormContextValue {
@@ -34,6 +35,8 @@ interface IssueFormContextValue {
   selectCategory: (category: IssueCategoryId) => void;
   selectSeverity: (severity: SeverityLevel) => void;
   updateDescription: (description: string) => void;
+  updateLocation: (location: IssueFormData['location']) => void;
+  setSubmittedTime: (timeIso?: string) => void;
   addMedia: (items: MediaItem[]) => void;
   removeMedia: (id: string) => void;
 }
@@ -58,6 +61,17 @@ export function IssueFormProvider({ children }: { children: ReactNode }) {
     setFormData((prev) => ({ ...prev, description }));
   };
 
+  const updateLocation = (location: IssueFormData['location']) => {
+    setFormData((prev) => ({ ...prev, location }));
+  };
+
+  const setSubmittedTime = (timeIso?: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      submittedAt: timeIso || new Date().toISOString(),
+    }));
+  };
+
   const addMedia = (items: MediaItem[]) => {
     setFormData((prev) => {
       const existingUris = new Set(prev.media.map((item) => item.uri));
@@ -75,6 +89,8 @@ export function IssueFormProvider({ children }: { children: ReactNode }) {
     selectCategory,
     selectSeverity,
     updateDescription,
+    updateLocation,
+    setSubmittedTime,
     addMedia,
     removeMedia,
   };

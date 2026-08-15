@@ -38,4 +38,5 @@ export interface IssueFormData {
   severity: SeverityLevel;
   location: IssueLocation;
   media: MediaItem[];
+  submittedAt?: string;
 }

@@ -9,16 +9,38 @@ import ReviewSummaryRow from '../../components/issue/ReviewSummaryRow';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
+import { useIssueForm } from '../../hooks/useIssueForm';
+import { supabase } from '@/lib/supabase';
 
 export default function ExistingIssueScreen() {
   const router = useRouter();
   const { existingIssueId } = useLocalSearchParams<{ existingIssueId?: string }>();
+  const { formData } = useIssueForm();
 
   const handleConfirmExisting = () => {
     router.replace({ pathname: '/report-issue/success', params: { mode: 'support' } });
   };
 
-  const handleSubmitAsNew = () => {
+  const handleSubmitAsNew = async () => {
+    try {
+      const submittedTimestamp = formData.submittedAt || new Date().toISOString();
+      await supabase.from('issues').insert({
+        code: formData.issueId,
+        title: formData.description?.slice(0, 60) || `${formData.category} report`,
+        description: formData.description,
+        category: formData.category,
+        severity: formData.severity,
+        latitude: formData.location.latitude,
+        longitude: formData.location.longitude,
+        address: formData.location.address,
+        city: 'Kathmandu',
+        status: 'pending',
+        created_at: submittedTimestamp,
+        updated_at: submittedTimestamp,
+      });
+    } catch (err) {
+      console.warn('Supabase issue submission error (non-fatal):', err);
+    }
     router.replace({ pathname: '/report-issue/success', params: { mode: 'new' } });
   };
 
