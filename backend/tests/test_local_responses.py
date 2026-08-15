@@ -27,7 +27,7 @@ EXPECTED_INTENT_IDS = [
 ]
 
 # One natural-language question per category — these should all be answered
-# locally, no Gemini call.
+# locally, no LLM call.
 STATIC_QUERIES = [
     "How can I save water?",
     "How can I reduce waste?",
@@ -69,9 +69,9 @@ def test_complex_queries_do_not_match_locally(message):
 
 
 @pytest.mark.parametrize("message", STATIC_QUERIES)
-def test_static_queries_skip_gemini(message):
+def test_static_queries_skip_llm(message):
     with patch("app.main.ask_ecobot") as mock_ask:
-        mock_ask.side_effect = AssertionError("Gemini should not be called for a local match")
+        mock_ask.side_effect = AssertionError("The LLM should not be called for a local match")
         response = client.post("/chat", json={"message": message})
         assert response.status_code == 200
         mock_ask.assert_not_called()
@@ -80,7 +80,7 @@ def test_static_queries_skip_gemini(message):
 
 
 @pytest.mark.parametrize("message", COMPLEX_QUERIES)
-def test_complex_queries_fall_through_to_gemini(message):
+def test_complex_queries_fall_through_to_llm(message):
     with patch("app.main.ask_ecobot") as mock_ask, patch("app.main.retrieve") as mock_retrieve:
         mock_retrieve.return_value = []
         mock_ask.return_value = {"answer": "stub answer", "quests": []}

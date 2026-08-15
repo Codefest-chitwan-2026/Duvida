@@ -1,9 +1,7 @@
 import json
 
-from google.genai import types
-
-from .gemini_client import MODEL_NAME
-from .gemini_client import get_client as get_gemini_client
+from .llm_client import MODEL_NAME
+from .llm_client import get_client as get_llm_client
 from .retrieval import format_retrieved_chunks, retrieve
 from .schemas import GeneratedQuest
 from .supabase_client import get_client as get_supabase_client
@@ -32,7 +30,7 @@ Reference material:
 
 
 class InvalidGeneratedQuest(ValueError):
-    """Raised when Gemini returns a quest that fails validation."""
+    """Raised when the model returns a quest that fails validation."""
 
 
 def build_retrieval_query(issue: dict) -> str:
@@ -54,7 +52,7 @@ def _validate_quest(quest: dict) -> None:
 
 
 def generate_quest_for_issue(issue: dict) -> dict:
-    """Retrieve sustainability context for the issue, ask Gemini for a quest, validate it."""
+    """Retrieve sustainability context for the issue, ask the model for a quest, validate it."""
     query = build_retrieval_query(issue)
     knowledge = format_retrieved_chunks(retrieve(query, top_k=5))
 
@@ -66,20 +64,22 @@ def generate_quest_for_issue(issue: dict) -> dict:
         f"Severity: {issue.get('severity')}"
     )
 
-    response = get_gemini_client().models.generate_content(
+    response = get_llm_client().chat.completions.create(
         model=MODEL_NAME,
-        contents=issue_summary,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT_TEMPLATE.format(
-                community_id=DEFAULT_COMMUNITY_ID,
-                knowledge=knowledge or "(no reference documents available)",
-            ),
-            response_mime_type="application/json",
-            response_schema=GeneratedQuest,
-        ),
+        messages=[
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT_TEMPLATE.format(
+                    community_id=DEFAULT_COMMUNITY_ID,
+                    knowledge=knowledge or "(no reference documents available)",
+                ),
+            },
+            {"role": "user", "content": issue_summary},
+        ],
+        response_format={"type": "json_object"},
     )
 
-    quest = response.parsed if response.parsed is not None else GeneratedQuest(**json.loads(response.text))
+    quest = GeneratedQuest(**json.loads(response.choices[0].message.content))
     quest_dict = quest.model_dump()
     # Never trust the model for the community id — always the real one.
     quest_dict["community_id"] = DEFAULT_COMMUNITY_ID
