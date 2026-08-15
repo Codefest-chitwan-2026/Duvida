@@ -40,7 +40,7 @@ export default function MediaScreen() {
       setShowValidationError(true);
       return;
     }
-    router.push('/report-issue/review');
+    router.push('/report-issue/duplicate-check');
   };
 
   return (

@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -9,6 +9,7 @@ import IssueProgress from '../../components/issue/IssueProgress';
 import ReviewSummaryRow from '../../components/issue/ReviewSummaryRow';
 import IssueIdCard from '../../components/issue/IssueIdCard';
 import { useIssueForm } from '../../hooks/useIssueForm';
+import { submitIssueReport } from '../../src/lib/issueSubmission';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
@@ -32,9 +33,23 @@ export default function ReviewScreen() {
   const router = useRouter();
   const { formData } = useIssueForm();
   const severity = SEVERITY_STYLES[formData.severity];
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    router.push('/report-issue/duplicate-check');
+  const handleSubmit = async () => {
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const issueId = await submitIssueReport(formData);
+      router.replace({ pathname: '/report-issue/success', params: { issueId, mode: 'new' } });
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error ? submitError.message : 'Unable to submit your report right now.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -90,14 +105,25 @@ export default function ReviewScreen() {
         </View>
       </ScrollView>
 
+      {error && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       <View style={styles.footer}>
-        <Button label="Submit Report  📤" onPress={handleSubmit} />
+        <Button
+          label={submitting ? 'Submitting…' : 'Submit Report  📤'}
+          onPress={handleSubmit}
+          disabled={submitting}
+        />
         <Button
           label="Back"
           variant="outline"
           onPress={() => router.back()}
           style={styles.backButton}
           textStyle={styles.backButtonLabel}
+          disabled={submitting}
         />
       </View>
     </SafeAreaView>
@@ -202,6 +228,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  errorBox: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: '#FDECEA',
+    borderWidth: 1,
+    borderColor: '#F5B7B1',
+  },
+  errorText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: '#B42318',
   },
   footer: {
     paddingHorizontal: spacing.lg,

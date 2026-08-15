@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import Button from '../../components/common/Button';
 import { useIssueForm } from '../../hooks/useIssueForm';
+import { formatIssueReference } from '../../src/lib/issueSubmission';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
@@ -12,8 +13,9 @@ import { fontSize, fontWeight } from '../../constants/typography';
 export default function ReportSuccessScreen() {
   const router = useRouter();
   const { formData } = useIssueForm();
-  const { mode } = useLocalSearchParams<{ mode?: 'new' | 'support' }>();
+  const { mode, issueId } = useLocalSearchParams<{ mode?: 'new' | 'support'; issueId?: string }>();
   const isSupport = mode === 'support';
+  const resolvedIssueId = typeof issueId === 'string' && issueId ? issueId : formData.issueId;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -31,7 +33,7 @@ export default function ReportSuccessScreen() {
 
         <View style={styles.idCard}>
           <Text style={styles.idLabel}>Report ID</Text>
-          <Text style={styles.idValue}>{formData.issueId}</Text>
+          <Text style={styles.idValue}>{formatIssueReference(resolvedIssueId)}</Text>
         </View>
 
         <Button
