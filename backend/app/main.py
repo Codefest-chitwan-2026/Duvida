@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .community_issues import fetch_active_issues, fetch_issue_by_id
@@ -24,6 +24,13 @@ from .quest_participation import (
     submit_quest,
     upload_quest_proof,
     verify_quest,
+)
+from .report_submission import (
+    CategoryNotFound,
+    ReporterNotRegistered,
+    create_issue,
+    register_guest_reporter,
+    upload_issue_media,
 )
 from .retrieval import format_retrieved_chunks, retrieve
 from .schemas import ChatReply, ChatRequest, CommunityIssue, MyQuest
@@ -93,6 +100,71 @@ def generate_quest(issue_id: str):
         return insert_quest(quest)
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Could not save the generated quest") from exc
+
+
+@app.post("/community/guest-id")
+def create_guest_id():
+    try:
+        reporter_id = register_guest_reporter()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Could not create a guest identity") from exc
+    return {"reporter_id": reporter_id}
+
+
+@app.post("/community/issues")
+async def submit_issue_endpoint(
+    reporter_id: str = Form(...),
+    category: str = Form(...),
+    description: str = Form(""),
+    severity: str = Form("medium"),
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    address: Optional[str] = Form(None),
+    city: Optional[str] = Form(None),
+    title: Optional[str] = Form(None),
+    files: List[UploadFile] = File(default=[]),
+):
+    try:
+        issue = create_issue(
+            reporter_id=reporter_id,
+            category=category,
+            description=description,
+            severity=severity,
+            latitude=latitude,
+            longitude=longitude,
+            address=address,
+            city=city,
+            title=title,
+        )
+    except CategoryNotFound as exc:
+        raise HTTPException(status_code=400, detail=f"Unknown category: {exc}") from exc
+    except ReporterNotRegistered as exc:
+        raise HTTPException(
+            status_code=422, detail="Reporter is not registered; request a new guest id"
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+    media_rows = []
+    try:
+        for index, file in enumerate(files):
+            file_bytes = await file.read()
+            media_rows.append(
+                upload_issue_media(
+                    issue_id=issue["id"],
+                    uploaded_by=reporter_id,
+                    index=index,
+                    filename=file.filename or f"file-{index}",
+                    file_bytes=file_bytes,
+                    content_type=file.content_type,
+                )
+            )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"Issue was saved, but media upload failed: {exc}"
+        ) from exc
+
+    return {"issue": issue, "media": media_rows}
 
 
 @app.post("/quests/{quest_id}/accept")
