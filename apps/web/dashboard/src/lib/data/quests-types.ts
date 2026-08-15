@@ -89,6 +89,7 @@ export interface QuestVerificationItem {
   participantId: string;
   questId: string;
   questTitle: string;
+  questDescription: string;
   questType: string;
   userId: string;
   userName: string;

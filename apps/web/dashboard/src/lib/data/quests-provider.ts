@@ -27,7 +27,7 @@
 import { MOCK_ISSUES, MOCK_ISSUE_MEDIA, MOCK_PROFILES, MOCK_QUESTS, MOCK_QUEST_PARTICIPANTS } from "@/data/mock-quests-data";
 import type { QuestParticipantRow, QuestVerificationItem, QuestVerificationProvider } from "@/lib/data/quests-types";
 
-const SIMULATED_LATENCY_MS = 300;
+const SIMULATED_LATENCY_MS = 0;
 
 // Mutable in-memory copy so Verify/Reject in the UI can move rows out of the
 // queue during this session, mirroring how a real UPDATE would remove a row
@@ -53,6 +53,7 @@ function toVerificationItem(p: QuestParticipantRow): QuestVerificationItem {
     participantId: p.id,
     questId: quest?.id ?? p.quest_id,
     questTitle: quest?.title ?? "Unknown quest",
+    questDescription: quest?.description ?? "No quest description is available.",
     questType: quest?.quest_type ?? "general",
     userId: p.user_id,
     userName: profile?.full_name ?? "Unknown user",
