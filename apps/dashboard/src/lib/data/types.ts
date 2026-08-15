@@ -48,6 +48,8 @@ export interface ReportsTrend {
 export interface RecentReport {
   id: string;
   title: string;
+  description: string;
+  imageUrl?: string;
   category: string;
   ward: string;
   location: string;

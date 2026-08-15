@@ -44,6 +44,7 @@ export const MOCK_DASHBOARD_DATA: DashboardData = {
     {
       id: "RPT-2041",
       title: "Waste accumulation near community market",
+      description: "Uncollected garbage has been piling up beside the market entrance for several days, causing odor and blocking pedestrian access.",
       category: "Waste & Recycling",
       ward: "Ward 3",
       location: "Community Market Road, Ward 3",
@@ -54,6 +55,7 @@ export const MOCK_DASHBOARD_DATA: DashboardData = {
     {
       id: "RPT-2040",
       title: "Water leakage on municipal road",
+      description: "A burst pipe is leaking water continuously onto the road, creating a slippery surface and wasting municipal water supply.",
       category: "Water Supply",
       ward: "Ward 2",
       location: "Municipal Road, Ward 2",
@@ -64,6 +66,7 @@ export const MOCK_DASHBOARD_DATA: DashboardData = {
     {
       id: "RPT-2039",
       title: "Streetlight not working",
+      description: "The streetlight at the Sector 4 crossing has been off for over a week, making the intersection unsafe after dark.",
       category: "Streetlight & Energy",
       ward: "Ward 1",
       location: "Sector 4 Crossing, Ward 1",
@@ -74,6 +77,7 @@ export const MOCK_DASHBOARD_DATA: DashboardData = {
     {
       id: "RPT-2038",
       title: "Damaged public footpath",
+      description: "Several paving stones along the riverside walkway are cracked and uneven, posing a tripping hazard for pedestrians.",
       category: "Road & Infrastructure",
       ward: "Ward 4",
       location: "Riverside Walkway, Ward 4",
@@ -84,6 +88,7 @@ export const MOCK_DASHBOARD_DATA: DashboardData = {
     {
       id: "RPT-2037",
       title: "Illegal dumping near public area",
+      description: "Construction debris and household waste have been dumped illegally near the park entrance, attracting pests and blocking the pathway.",
       category: "Waste & Recycling",
       ward: "Ward 5",
       location: "Public Park Entrance, Ward 5",

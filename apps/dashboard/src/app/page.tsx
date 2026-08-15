@@ -70,10 +70,11 @@ export default function DashboardOverviewPage() {
         <ReportsTrendChart trend={data.reportsTrend} />
       </div>
 
+      <div id="recent-reports" style={{ marginBottom: "20px" }}>
+        <RecentReports reports={data.recentReports} />
+      </div>
+
       <div className="dashboard-grid-3col">
-        <div id="recent-reports">
-          <RecentReports reports={data.recentReports} />
-        </div>
         <div id="top-reporters">
           <TopReporters reporters={data.topReporters} />
         </div>
