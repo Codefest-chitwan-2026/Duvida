@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,25 +8,45 @@ import { BottomNavBar } from "@/components/BottomNavBar";
 import { PhotoPlaceholder } from "@/components/PhotoPlaceholder";
 import { PhotoUploadSlot } from "@/components/PhotoUploadSlot";
 import { ProgressRing } from "@/components/ProgressRing";
+import { env } from "@/lib/env";
 import { colors } from "@/theme/colors";
-import type { Quest } from "@/features/quests/mockQuests";
 
 const NOTES_MAX_LENGTH = 300;
 /** Clears the floating BottomNavBar (nav pill + overlapping FAB). */
 const NAV_BAR_CLEARANCE = 100;
 
 type SubmitProofScreenProps = {
-  quest: Quest;
+  questId: string;
+  title: string;
+  description: string;
+  tokens: number;
+  progressPercent: number;
   coinBalance: number;
 };
 
-export function SubmitProofScreen({ quest, coinBalance }: SubmitProofScreenProps) {
+function inferFilenameAndType(uri: string): { filename: string; type: string } {
+  const match = /\.(\w+)(?:\?.*)?$/.exec(uri);
+  const ext = match ? match[1].toLowerCase() : "jpg";
+  const type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+  return { filename: `proof.${ext}`, type };
+}
+
+export function SubmitProofScreen({
+  questId,
+  title,
+  description,
+  tokens,
+  progressPercent,
+  coinBalance,
+}: SubmitProofScreenProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [beforeUri, setBeforeUri] = useState<string | null>(null);
   const [afterUri, setAfterUri] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const detectedAt = useMemo(
     () =>
@@ -40,16 +60,42 @@ export function SubmitProofScreen({ quest, coinBalance }: SubmitProofScreenProps
     []
   );
 
-  const canSubmit = afterUri !== null;
+  const canSubmit = afterUri !== null && !uploading;
 
-  const handleSubmit = () => {
-    if (!canSubmit) {
+  const handleSubmit = async () => {
+    if (afterUri === null) {
       Alert.alert("After photo required", "Add an after photo before submitting proof.");
       return;
     }
-    Alert.alert("Proof submitted", "A moderator will review your submission shortly.", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const { filename, type } = inferFilenameAndType(afterUri);
+      const fileResponse = await fetch(afterUri);
+      const blob = await fileResponse.blob();
+
+      const formData = new FormData();
+      formData.append("file", new Blob([blob], { type }), filename);
+
+      const response = await fetch(`${env.advisorApiUrl}/quests/${questId}/proof`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+
+      Alert.alert("Proof submitted", "Your quest is now marked as submitted.", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      setUploadError(message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -76,24 +122,19 @@ export function SubmitProofScreen({ quest, coinBalance }: SubmitProofScreenProps
               <View style={styles.questIconBadge}>
                 <MaterialCommunityIcons name="delete" size={14} color={colors.brandGreenDark} />
               </View>
-              <Text style={styles.questTitle}>{quest.title}</Text>
+              <Text style={styles.questTitle}>{title}</Text>
             </View>
-            <Text style={styles.questDescription}>{quest.description}</Text>
+            <Text style={styles.questDescription}>{description}</Text>
             <View style={styles.questStatsRow}>
               <View style={styles.questStat}>
                 <MaterialCommunityIcons name="hexagon" size={14} color={colors.coinGold} />
-                <Text style={styles.questStatValue}>{quest.vouchers}</Text>
-                <Text style={styles.questStatLabel}>Vouchers</Text>
-              </View>
-              <View style={styles.questStat}>
-                <Ionicons name="people" size={14} color={colors.textMuted} />
-                <Text style={styles.questStatValue}>{quest.participants}</Text>
-                <Text style={styles.questStatLabel}>Participants</Text>
+                <Text style={styles.questStatValue}>{tokens}</Text>
+                <Text style={styles.questStatLabel}>Points</Text>
               </View>
             </View>
           </View>
           <View style={styles.progressWrap}>
-            <ProgressRing percent={quest.progressPercent} />
+            <ProgressRing percent={progressPercent} />
             <Text style={styles.progressLabel}>Progress</Text>
           </View>
         </View>
@@ -149,17 +190,6 @@ export function SubmitProofScreen({ quest, coinBalance }: SubmitProofScreenProps
 
         <View style={styles.metaRow}>
           <View style={styles.metaCard}>
-            <Ionicons name="location" size={16} color={colors.brandGreenDark} />
-            <Text style={styles.metaLabel}>Location</Text>
-            <Text style={styles.metaValue}>{quest.location}</Text>
-            <Pressable onPress={() => router.push("/")}>
-              <View style={styles.metaLinkRow}>
-                <Text style={styles.metaLink}>View on Map</Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.brandGreenDark} />
-              </View>
-            </Pressable>
-          </View>
-          <View style={styles.metaCard}>
             <Ionicons name="calendar" size={16} color={colors.brandGreenDark} />
             <Text style={styles.metaLabel}>Date & Time</Text>
             <Text style={styles.metaValue}>{detectedAt}</Text>
@@ -178,11 +208,18 @@ export function SubmitProofScreen({ quest, coinBalance }: SubmitProofScreenProps
           </View>
         </View>
 
+        {uploadError && <Text style={styles.uploadErrorText}>{uploadError}</Text>}
+
         <Pressable
           style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
           onPress={handleSubmit}
+          disabled={!canSubmit}
         >
-          <Text style={styles.submitButtonText}>Submit Proof</Text>
+          {uploading ? (
+            <ActivityIndicator size="small" color={colors.textOnDark} />
+          ) : (
+            <Text style={styles.submitButtonText}>Submit Proof</Text>
+          )}
         </Pressable>
       </ScrollView>
 
@@ -456,5 +493,10 @@ const styles = StyleSheet.create({
     color: colors.textOnDark,
     fontSize: 15,
     fontWeight: "700",
+  },
+  uploadErrorText: {
+    fontSize: 12.5,
+    color: "#DC2626",
+    marginTop: -8,
   },
 });

@@ -1,4 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
+
 import { env } from "@/lib/env";
 
 if (!env.supabaseUrl) {
@@ -11,8 +13,9 @@ if (!env.supabasePublishableKey) {
 
 export const supabase = createClient(env.supabaseUrl, env.supabasePublishableKey, {
   auth: {
-    persistSession: true,
+    storage: AsyncStorage,
     autoRefreshToken: true,
+    persistSession: true,
     detectSessionInUrl: false,
   },
 });

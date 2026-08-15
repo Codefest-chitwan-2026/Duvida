@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { env } from "@/lib/env";
@@ -817,6 +818,18 @@ export default function SustainabilityAdvisorScreen() {
     setIssuesError(null);
     setQuestStateByIssueId({});
   };
+
+  // Tab screens stay mounted when you switch tabs, so without this the chat/
+  // community-quests state would still be sitting there on return. Resetting
+  // on blur means it's back to the two-option choose screen by the time you
+  // come back to this tab.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        resetEcoBot();
+      };
+    }, [])
+  );
 
   return (
     <KeyboardAvoidingView
