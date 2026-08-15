@@ -5,91 +5,59 @@ import { useRouter } from 'expo-router';
 
 import Header from '../../components/common/Header';
 import { useIssueForm } from '../../hooks/useIssueForm';
+import { submitReport } from '../../lib/reportSubmission';
 import { colors } from '../../constants/colors';
 import { spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
-import { supabase } from '@/lib/supabase';
 
-/**
- * Mock "existing issue" this build checks new reports against — stands in
- * for a real GPS-proximity + text/image-similarity backend query.
- */
-const MOCK_EXISTING_ISSUE = {
-  issueId: 'ISS-2026-08-01-40213',
-  category: 'pothole' as const,
-  description: 'Deep pothole reported near Mid Baneshwor causing traffic issues.',
-  location: { address: 'Mid Baneshwor, Kathmandu, Nepal', latitude: 27.7105, longitude: 85.3305 },
-  reportedAgo: '3 days ago',
-};
-
-function isNearby(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
-  const distanceDegrees = Math.hypot(a.latitude - b.latitude, a.longitude - b.longitude);
-  return distanceDegrees < 0.01; // ~1km at this latitude — mock proximity threshold
-}
+type SubmissionState = 'submitting' | 'error';
 
 export default function DuplicateCheckScreen() {
   const router = useRouter();
   const { formData } = useIssueForm();
-  const [checking, setChecking] = useState(true);
-
-  const isDuplicate =
-    formData.category === MOCK_EXISTING_ISSUE.category && isNearby(formData.location, MOCK_EXISTING_ISSUE.location);
+  const [state, setState] = useState<SubmissionState>('submitting');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
+    let cancelled = false;
 
-    async function processSubmission() {
-      if (!isDuplicate) {
-        try {
-          const submittedTimestamp = formData.submittedAt || new Date().toISOString();
-          await supabase.from('issues').insert({
-            code: formData.issueId,
-            title: formData.description?.slice(0, 60) || `${formData.category} report`,
-            description: formData.description,
-            category: formData.category,
-            severity: formData.severity,
-            latitude: formData.location.latitude,
-            longitude: formData.location.longitude,
-            address: formData.location.address,
-            city: 'Kathmandu',
-            status: 'pending',
-            created_at: submittedTimestamp,
-            updated_at: submittedTimestamp,
-          });
-        } catch (err) {
-          console.warn('Supabase issue submission error (non-fatal):', err);
+    submitReport(formData)
+      .then(() => {
+        if (!cancelled) {
+          router.replace({ pathname: '/report-issue/success', params: { mode: 'new' } });
         }
-      }
-
-      if (isMounted) {
-        setChecking(false);
-        router.replace(
-          isDuplicate
-            ? { pathname: '/report-issue/existing-issue', params: { existingIssueId: MOCK_EXISTING_ISSUE.issueId } }
-            : { pathname: '/report-issue/success', params: { mode: 'new' } }
-        );
-      }
-    }
-
-    const timer = setTimeout(() => {
-      void processSubmission();
-    }, 850);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setState('error');
+          setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+        }
+      });
 
     return () => {
-      isMounted = false;
-      clearTimeout(timer);
+      cancelled = true;
     };
-  }, [isDuplicate, router, formData]);
+    // formData is only read once, at submit time — re-running this on every
+    // form change would resubmit mid-request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <Header title="Checking Report" onBackPress={() => router.back()} />
+      <Header title="Submitting Report" onBackPress={() => router.back()} />
       <View style={styles.content}>
-        <ActivityIndicator size="large" color={colors.primaryGreen} />
-        <Text style={styles.title}>{checking ? 'Checking for duplicate reports…' : 'Done'}</Text>
-        <Text style={styles.subtitle}>
-          Comparing location, description, and photos against nearby reports.
-        </Text>
+        {state === 'submitting' ? (
+          <>
+            <ActivityIndicator size="large" color={colors.primaryGreen} />
+            <Text style={styles.title}>Submitting your report…</Text>
+            <Text style={styles.subtitle}>Saving your report and uploading evidence.</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>Submission failed</Text>
+            <Text style={styles.subtitle}>{errorMessage}</Text>
+          </>
+        )}
       </View>
     </SafeAreaView>
   );

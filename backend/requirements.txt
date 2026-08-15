@@ -13,3 +13,4 @@ chromadb
 pytest
 httpx
 supabase
+python-multipart
