@@ -117,7 +117,6 @@ Logout clears the Supabase session and returns to `(auth)/welcome` — blocked o
 The citizen app and web tools are separate workspace sections that share the same backend contracts:
 
 - `apps/mobile` — this Expo Router citizen app.
-- `apps/web/admin` — the Next.js authority operations dashboard.
 - `apps/web/dashboard` — the Next.js municipal analytics dashboard.
 
 Nothing from `apps/web` belongs inside the mobile navigator, and mobile screens should remain in `apps/mobile`.
