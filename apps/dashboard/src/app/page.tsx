@@ -68,17 +68,17 @@ export default function DashboardOverviewPage() {
         <ReportsTrendChart trend={data.reportsTrend} />
       </div>
 
-      <div id="recent-reports" style={{ marginBottom: "20px" }}>
-        <RecentReports reports={data.recentReports} />
-      </div>
-
-      <div className="dashboard-grid-3col">
+      <div className="dashboard-grid-3col" style={{ marginBottom: "20px" }}>
         <div id="top-reporters">
           <TopReporters reporters={data.topReporters} />
         </div>
         <div id="status-breakdown">
           <StatusDonut items={data.statusBreakdown} selectedStatus={statusFilter} onStatusChange={setStatusFilter} />
         </div>
+      </div>
+
+      <div id="recent-reports" style={{ marginBottom: "20px" }}>
+        <RecentReports reports={data.recentReports} />
       </div>
 
       <div id="recent-activities" style={{ marginBottom: 0 }}>
