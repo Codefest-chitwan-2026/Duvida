@@ -6,40 +6,61 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import Header from '../../components/common/Header';
 import Button from '../../components/common/Button';
 import IssueProgress from '../../components/issue/IssueProgress';
-import CategoryBadge from '../../components/issue/CategoryBadge';
-import LocationRow from '../../components/issue/LocationRow';
-import DescriptionField from '../../components/issue/DescriptionField';
-import SeveritySelector from '../../components/issue/SeveritySelector';
-
 import { useIssueForm } from '../../hooks/useIssueForm';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { fontSize, fontWeight } from '../../constants/typography';
-import { IssueCategoryId } from '../../types/issue';
+import { SeverityLevel } from '../../types/issue';
 
-const CATEGORY_LABELS: Record<IssueCategoryId, string> = {
-  pothole: 'Pothole',
-  streetlight: 'Streetlight',
-  garbage: 'Garbage',
-  traffic: 'Traffic',
-  water: 'Water',
-  other: 'Other',
-};
+type SeverityIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+interface SeverityOption {
+  level: SeverityLevel;
+  label: string;
+  icon: SeverityIconName;
+  color: string;
+  surface: string;
+}
+
+const SEVERITY_OPTIONS: SeverityOption[] = [
+  {
+    level: 'low',
+    label: 'Low',
+    icon: 'emoticon-happy-outline',
+    color: colors.primaryGreen,
+    surface: '#F0FBF5',
+  },
+  {
+    level: 'medium',
+    label: 'Medium',
+    icon: 'emoticon-neutral-outline',
+    color: colors.amber,
+    surface: '#FFF8F0',
+  },
+  {
+    level: 'high',
+    label: 'High',
+    icon: 'alert',
+    color: colors.red,
+    surface: '#FFF3F3',
+  },
+];
 
 const DESCRIPTION_MAX_LENGTH = 300;
 const WEB_MAX_WIDTH = 480;
 const isWeb = Platform.OS === 'web';
 
-// Trims the trailing country segment for the compact card while
-// leaving the full stored address untouched elsewhere in the form.
 function formatCompactAddress(address: string): string {
   const parts = address.split(',').map((part) => part.trim());
   if (parts.length > 1 && parts[parts.length - 1].toLowerCase() === 'nepal') {
@@ -51,8 +72,8 @@ function formatCompactAddress(address: string): string {
 export default function DetailsScreen() {
   const router = useRouter();
   const { formData, updateDescription, selectSeverity } = useIssueForm();
-
   const compactAddress = formatCompactAddress(formData.location.address);
+  const coordinates = `Lat ${formData.location.latitude.toFixed(4)}, Long ${formData.location.longitude.toFixed(4)}`;
 
   const handleLocationPress = () => {
     Alert.alert('Coming Soon', 'Location selection coming soon.');
@@ -77,27 +98,97 @@ export default function DetailsScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <CategoryBadge icon="📌" label={CATEGORY_LABELS[formData.category]} />
-
             <Text style={styles.sectionTitle}>Location</Text>
-            <LocationRow
-              address={compactAddress}
-              coordinates={`Lat ${formData.location.latitude.toFixed(4)}, Long ${formData.location.longitude.toFixed(4)}`}
+            <TouchableOpacity
+              style={styles.locationCard}
               onPress={handleLocationPress}
+              activeOpacity={0.8}
+              accessibilityRole="button"
               accessibilityLabel={`Location: ${compactAddress}. Tap to change location.`}
-            />
+            >
+              <View style={styles.locationIconBadge}>
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={25}
+                  color={colors.primaryGreen}
+                />
+              </View>
+              <View style={styles.locationTextGroup}>
+                <Text style={styles.locationAddress} numberOfLines={1}>
+                  {compactAddress}
+                </Text>
+                <Text style={styles.locationCoordinates}>{coordinates}</Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
 
-            <Text style={styles.sectionTitle}>Description</Text>
-            <DescriptionField
-              value={formData.description}
-              onChangeText={updateDescription}
-              maxLength={DESCRIPTION_MAX_LENGTH}
-              showCharCount
-              accessibilityLabel="Issue description"
-            />
+            <TouchableOpacity
+              style={styles.changeLocationButton}
+              onPress={handleLocationPress}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Change location"
+            >
+              <Text style={styles.changeLocationText}>Change location</Text>
+            </TouchableOpacity>
 
-            <Text style={styles.sectionTitle}>Severity Level</Text>
-            <SeveritySelector value={formData.severity} onChange={selectSeverity} />
+            <Text style={[styles.sectionTitle, styles.descriptionTitle]}>Description</Text>
+            <View style={styles.descriptionField}>
+              <TextInput
+                style={styles.descriptionInput}
+                value={formData.description}
+                onChangeText={updateDescription}
+                placeholder="Describe the issue..."
+                placeholderTextColor={colors.textMuted}
+                multiline
+                textAlignVertical="top"
+                maxLength={DESCRIPTION_MAX_LENGTH}
+                selectionColor={colors.primaryGreen}
+                accessibilityLabel="Issue description"
+              />
+              <Text style={styles.characterCounter}>
+                {formData.description.length} / {DESCRIPTION_MAX_LENGTH}
+              </Text>
+            </View>
+
+            <Text style={[styles.sectionTitle, styles.severityTitle]}>Severity Level</Text>
+            <View style={styles.severityRow} accessibilityRole="radiogroup">
+              {SEVERITY_OPTIONS.map((option) => {
+                const selected = formData.severity === option.level;
+
+                return (
+                  <TouchableOpacity
+                    key={option.level}
+                    style={[
+                      styles.severityButton,
+                      {
+                        backgroundColor: option.surface,
+                        borderColor: option.color,
+                      },
+                      selected && styles.severityButtonSelected,
+                    ]}
+                    onPress={() => selectSeverity(option.level)}
+                    activeOpacity={0.8}
+                    accessibilityRole="radio"
+                    accessibilityLabel={`${option.label} severity`}
+                    accessibilityState={{ checked: selected }}
+                  >
+                    <MaterialCommunityIcons
+                      name={option.icon}
+                      size={18}
+                      color={option.color}
+                    />
+                    <Text style={[styles.severityLabel, { color: option.color }]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <Text style={styles.helperText}>How urgent is this issue?</Text>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -110,7 +201,7 @@ export default function DetailsScreen() {
             style={styles.footerButton}
           />
           <Button
-            label="Next"
+            label="Next  →"
             onPress={() => router.push('/report-issue/media')}
             style={styles.footerButton}
           />
@@ -141,15 +232,123 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    flexGrow: 1,
+    paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
   },
   sectionTitle: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
     color: colors.textPrimary,
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
+  },
+  locationCard: {
+    minHeight: 78,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  locationIconBadge: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+    backgroundColor: colors.greenSurface,
+    borderRadius: radius.md,
+  },
+  locationTextGroup: {
+    flex: 1,
+    minWidth: 0,
+  },
+  locationAddress: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
+  },
+  locationCoordinates: {
+    marginTop: spacing.xs,
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+  },
+  changeLocationButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.sm,
+  },
+  changeLocationText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.primaryGreen,
+  },
+  descriptionTitle: {
+    marginTop: spacing.xl,
+  },
+  descriptionField: {
+    minHeight: 154,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  descriptionInput: {
+    flex: 1,
+    minHeight: 154,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxxl,
+    fontSize: fontSize.base,
+    lineHeight: 21,
+    color: colors.textPrimary,
+  },
+  characterCounter: {
+    position: 'absolute',
+    right: spacing.md,
+    bottom: spacing.sm,
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+  },
+  severityTitle: {
+    marginTop: spacing.xxl,
+  },
+  severityRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  severityButton: {
+    flex: 1,
+    minWidth: 0,
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    borderWidth: 1.25,
+    borderRadius: radius.md,
+  },
+  severityButtonSelected: {
+    borderWidth: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  severityLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
   helperText: {
     marginTop: spacing.sm,
@@ -159,10 +358,9 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
     backgroundColor: colors.surface,
   },
   footerButton: {
