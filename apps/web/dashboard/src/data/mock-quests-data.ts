@@ -1,0 +1,221 @@
+// Development-only mock data. Replace with real Supabase rows before production.
+//
+// Shaped as raw rows from `issues`, `issue_media`, `quests`,
+// `quest_participants`, and `profiles` (rather than pre-flattened UI
+// objects) so this file doubles as a worked example of what the real
+// Supabase tables should look like for the quest verification flow. See
+// quests-types.ts for the column contract and quests-provider.ts for the
+// join/filter logic that turns these rows into the verification queue.
+
+import type { IssueMediaRow, IssueRow, ProfileRow, QuestParticipantRow, QuestRow } from "@/lib/data/quests-types";
+
+export const MOCK_PROFILES: ProfileRow[] = [
+  { id: "usr-ashwin", full_name: "Ashwin Gurung", username: "ashwin.g", role: "citizen" },
+  { id: "usr-maya", full_name: "Maya Rai", username: "maya.rai", role: "citizen" },
+  { id: "usr-rohan", full_name: "Rohan Gurung", username: "rohan.g", role: "citizen" },
+  { id: "usr-sita", full_name: "Sita Thapa", username: "sita.thapa", role: "citizen" },
+  { id: "usr-binayak", full_name: "Binayak G.C.", username: "binayak.gc", role: "citizen" },
+];
+
+export const MOCK_ISSUES: IssueRow[] = [
+  {
+    id: "iss-2037",
+    reporter_id: "usr-binayak",
+    category_id: "waste-recycling",
+    title: "Illegal dumping near public area",
+    description: "Construction debris and household waste dumped near the park entrance, attracting pests and blocking the pathway.",
+    status: "verified",
+    severity: "high",
+    latitude: 27.6966,
+    longitude: 85.3372,
+    address: "Public Park Entrance",
+    city: "Kathmandu",
+    created_at: "2026-08-12T09:10:00Z",
+  },
+  {
+    id: "iss-2040",
+    reporter_id: "usr-maya",
+    category_id: "water-supply",
+    title: "Water leakage on municipal road",
+    description: "A burst pipe is leaking water continuously onto the road, wasting municipal water supply.",
+    status: "verified",
+    severity: "medium",
+    latitude: 27.7025,
+    longitude: 85.3145,
+    address: "Municipal Road, Ward 2",
+    city: "Kathmandu",
+    created_at: "2026-08-13T06:40:00Z",
+  },
+  {
+    id: "iss-2038",
+    reporter_id: "usr-rohan",
+    category_id: "greenery-biodiversity",
+    title: "Bare riverside embankment",
+    description: "Riverside walkway has no tree cover, contributing to erosion and heat buildup.",
+    status: "verified",
+    severity: "low",
+    latitude: 27.6889,
+    longitude: 85.3247,
+    address: "Riverside Walkway, Ward 4",
+    city: "Kathmandu",
+    created_at: "2026-08-11T14:20:00Z",
+  },
+  {
+    id: "iss-2041",
+    reporter_id: "usr-sita",
+    category_id: "community-action",
+    title: "Waste accumulation near community market",
+    description: "Uncollected garbage piling up beside the market entrance, causing odor and blocking pedestrian access.",
+    status: "verified",
+    severity: "high",
+    latitude: 27.7104,
+    longitude: 85.3222,
+    address: "Community Market Road, Ward 3",
+    city: "Kathmandu",
+    created_at: "2026-08-14T08:05:00Z",
+  },
+];
+
+// `storage_path` is left null in mock data (no real files uploaded in this
+// UI-only phase) — the detail view falls back to a placeholder tile, same
+// pattern as RecentReports' optional `imageUrl`.
+export const MOCK_ISSUE_MEDIA: IssueMediaRow[] = [
+  { id: "med-2037-1", issue_id: "iss-2037", uploaded_by: "usr-binayak", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Dumped waste at park entrance", created_at: "2026-08-12T09:11:00Z" },
+  { id: "med-2040-1", issue_id: "iss-2040", uploaded_by: "usr-maya", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Leaking pipe on municipal road", created_at: "2026-08-13T06:41:00Z" },
+  { id: "med-2038-1", issue_id: "iss-2038", uploaded_by: "usr-rohan", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Bare embankment, no tree cover", created_at: "2026-08-11T14:21:00Z" },
+  { id: "med-2041-1", issue_id: "iss-2041", uploaded_by: "usr-sita", media_type: "image", storage_path: "", thumbnail_path: null, caption: "Garbage near market entrance", created_at: "2026-08-14T08:06:00Z" },
+];
+
+export const MOCK_QUESTS: QuestRow[] = [
+  {
+    id: "qst-101",
+    title: "Riverside Plastic Cleanup",
+    description: "Clear plastic and dumped waste from the park entrance and surrounding embankment.",
+    quest_type: "cleanup",
+    points_reward: 30,
+    status: "active",
+    location: "Public Park Entrance",
+    latitude: 27.6966,
+    longitude: 85.3372,
+    address: "Public Park Entrance",
+    city: "Kathmandu",
+    created_by: "ai-system",
+    created_at: "2026-08-12T10:00:00Z",
+    source_issue_id: "iss-2037",
+  },
+  {
+    id: "qst-102",
+    title: "Restore Community Water Point",
+    description: "Report and flag the leaking municipal pipe, and help clear the pooled runoff water.",
+    quest_type: "water",
+    points_reward: 35,
+    status: "active",
+    location: "Municipal Road, Ward 2",
+    latitude: 27.7025,
+    longitude: 85.3145,
+    address: "Municipal Road, Ward 2",
+    city: "Kathmandu",
+    created_by: "ai-system",
+    created_at: "2026-08-13T07:00:00Z",
+    source_issue_id: "iss-2040",
+  },
+  {
+    id: "qst-103",
+    title: "Plant Trees Along Riverside Walkway",
+    description: "Plant and stake saplings along the bare stretch of the riverside walkway to reduce erosion.",
+    quest_type: "greenery",
+    points_reward: 40,
+    status: "active",
+    location: "Riverside Walkway, Ward 4",
+    latitude: 27.6889,
+    longitude: 85.3247,
+    address: "Riverside Walkway, Ward 4",
+    city: "Kathmandu",
+    created_by: "ai-system",
+    created_at: "2026-08-11T15:00:00Z",
+    source_issue_id: "iss-2038",
+  },
+  {
+    id: "qst-104",
+    title: "Organize Neighborhood Cleanup Drive",
+    description: "Coordinate a cleanup of the market road and safely dispose of the accumulated waste.",
+    quest_type: "community",
+    points_reward: 25,
+    status: "active",
+    location: "Community Market Road, Ward 3",
+    latitude: 27.7104,
+    longitude: 85.3222,
+    address: "Community Market Road, Ward 3",
+    city: "Kathmandu",
+    created_by: "ai-system",
+    created_at: "2026-08-14T09:00:00Z",
+    source_issue_id: "iss-2041",
+  },
+];
+
+// Mixed statuses on purpose: only the `submitted` rows should surface in the
+// verification queue. `in_progress` and `completed` rows exist here to prove
+// the provider's filter (see quests-provider.ts) actually excludes them,
+// rather than the mock just hand-picking a pre-filtered list.
+export const MOCK_QUEST_PARTICIPANTS: QuestParticipantRow[] = [
+  {
+    id: "qp-1",
+    quest_id: "qst-101",
+    user_id: "usr-ashwin",
+    status: "submitted",
+    progress_percent: 80,
+    proof_media_path: "",
+    points_awarded: null,
+    joined_at: "2026-08-12T11:00:00Z",
+    completed_at: null,
+    updated_at: "2026-08-15T05:30:00Z",
+  },
+  {
+    id: "qp-2",
+    quest_id: "qst-101",
+    user_id: "usr-binayak",
+    status: "submitted",
+    progress_percent: 80,
+    proof_media_path: "",
+    points_awarded: null,
+    joined_at: "2026-08-13T08:00:00Z",
+    completed_at: null,
+    updated_at: "2026-08-15T03:15:00Z",
+  },
+  {
+    id: "qp-3",
+    quest_id: "qst-102",
+    user_id: "usr-maya",
+    status: "submitted",
+    progress_percent: 80,
+    proof_media_path: "",
+    points_awarded: null,
+    joined_at: "2026-08-13T09:30:00Z",
+    completed_at: null,
+    updated_at: "2026-08-14T18:45:00Z",
+  },
+  {
+    id: "qp-4",
+    quest_id: "qst-103",
+    user_id: "usr-rohan",
+    status: "in_progress",
+    progress_percent: 40,
+    proof_media_path: null,
+    points_awarded: null,
+    joined_at: "2026-08-11T16:00:00Z",
+    completed_at: null,
+    updated_at: "2026-08-14T12:00:00Z",
+  },
+  {
+    id: "qp-5",
+    quest_id: "qst-104",
+    user_id: "usr-sita",
+    status: "completed",
+    progress_percent: 100,
+    proof_media_path: "",
+    points_awarded: 25,
+    joined_at: "2026-08-14T09:30:00Z",
+    completed_at: "2026-08-14T20:00:00Z",
+    updated_at: "2026-08-14T20:00:00Z",
+  },
+];
