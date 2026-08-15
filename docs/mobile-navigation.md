@@ -24,14 +24,14 @@ Splash -> check Supabase session
   has session -> MainTabs directly
 ```
 
-Today: **the auth gate is wired, but the session behind it is a placeholder, not Supabase.** `app/_layout.tsx` now redirects between `(auth)` and the rest of the app based on `src/lib/auth.tsx`'s `AuthProvider` — an in-memory `useState(false)` that `signIn()` flips to `true`. There is still no `supabase` client file and no real session check; swap the state source in `auth.tsx` for a Supabase session (`getSession`/`onAuthStateChange`) without touching the navigation structure. Welcome/Login UI was ported from `origin/main`'s standalone `mobile/src/features/login/*` scaffold into `apps/mobile/src/features/auth/*`.
+Today: **the auth gate is wired, but the session behind it is a placeholder, not Supabase.** `app/_layout.tsx` now redirects between `(auth)` and the rest of the app based on `src/lib/auth.tsx`'s `AuthProvider` — an in-memory `useState(false)` that `signIn()` flips to `true`. There is still no real session check; swap the state source in `auth.tsx` for a Supabase session (`getSession`/`onAuthStateChange`) without touching the navigation structure — a `supabase` client already exists at `src/lib/supabase.ts` (added for report submission) and can be reused here. Welcome/Login UI was ported from `origin/main`'s standalone `mobile/src/features/login/*` scaffold into `apps/mobile/src/features/auth/*`; SignupScreen was added alongside it, same visual language.
 
 | Screen | Target path | Status |
 | --- | --- | --- |
 | Splash / session gate | `app/_layout.tsx` (`RootNavigator`, redirects on `isAuthenticated`) | 🚧 gate works; backing state is a placeholder, not a real Supabase session |
-| Welcome | `app/(auth)/welcome.tsx` → [WelcomeScreen.tsx](../apps/mobile/src/features/auth/WelcomeScreen.tsx) | ✅ "Get Started" signs in directly (no Register step yet); "Log In" goes to Login |
-| Login | `app/(auth)/login.tsx` → [LoginScreen.tsx](../apps/mobile/src/features/auth/LoginScreen.tsx) | ✅ UI + fields wired; "Log In"/"Sign up" both sign in directly (no real Supabase call yet) |
-| Register | `app/(auth)/register.tsx` | ⬜ not part of the ported scaffold; Welcome's "Get Started" bypasses it for now |
+| Welcome | `app/(auth)/welcome.tsx` → [WelcomeScreen.tsx](../apps/mobile/src/features/auth/WelcomeScreen.tsx) | ✅ "Get Started" goes to Register; "Log In" goes to Login |
+| Login | `app/(auth)/login.tsx` → [LoginScreen.tsx](../apps/mobile/src/features/auth/LoginScreen.tsx) | 🚧 UI + fields wired, "Sign up" link goes to Register; "Log In" still signs in via the placeholder (no real Supabase call yet) |
+| Register | `app/(auth)/register.tsx` → [SignupScreen.tsx](../apps/mobile/src/features/auth/SignupScreen.tsx) | 🚧 UI + fields + client-side validation wired, submitting goes to Login; no real Supabase signUp call yet |
 | Auth group layout | `app/(auth)/_layout.tsx` | ✅ |
 
 ## Bottom tabs
