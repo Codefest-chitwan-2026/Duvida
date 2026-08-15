@@ -21,43 +21,57 @@ type MyQuest = {
   points_awarded: number;
 };
 
-function capitalize(value: string): string {
-  return value.length > 0 ? value[0].toUpperCase() + value.slice(1) : value;
+function formatStatus(status: string): string {
+  return status
+    .split("_")
+    .map((word) => (word.length > 0 ? word[0].toUpperCase() + word.slice(1) : word))
+    .join(" ");
 }
+
+type StartState = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string };
 
 export default function QuestsScreen() {
   const insets = useSafeAreaInsets();
   const [myQuests, setMyQuests] = useState<MyQuest[]>([]);
   const [myQuestsLoading, setMyQuestsLoading] = useState(false);
   const [myQuestsError, setMyQuestsError] = useState<string | null>(null);
+  const [startStateByQuestId, setStartStateByQuestId] = useState<Record<string, StartState>>({});
+
+  const fetchMyQuests = async () => {
+    setMyQuestsLoading(true);
+    setMyQuestsError(null);
+    try {
+      const response = await fetch(`${env.advisorApiUrl}/quests/my`);
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      const data: MyQuest[] = await response.json();
+      setMyQuests(data);
+    } catch (err) {
+      setMyQuestsError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setMyQuestsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchMyQuests = async () => {
-      setMyQuestsLoading(true);
-      setMyQuestsError(null);
-      try {
-        const response = await fetch(`${env.advisorApiUrl}/quests/my`);
-        if (!response.ok) {
-          throw new Error(`Request failed (${response.status})`);
-        }
-        const data: MyQuest[] = await response.json();
-        if (!cancelled) setMyQuests(data);
-      } catch (err) {
-        if (!cancelled) {
-          setMyQuestsError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-        }
-      } finally {
-        if (!cancelled) setMyQuestsLoading(false);
-      }
-    };
-
     fetchMyQuests();
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  const startQuest = async (questId: string) => {
+    setStartStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "loading" } }));
+    try {
+      const response = await fetch(`${env.advisorApiUrl}/quests/${questId}/start`, { method: "POST" });
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      setStartStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "idle" } }));
+      await fetchMyQuests();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      setStartStateByQuestId((prev) => ({ ...prev, [questId]: { kind: "error", message } }));
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -83,7 +97,12 @@ export default function QuestsScreen() {
         )}
 
         {myQuests.map((quest) => (
-          <MyQuestCard key={quest.quest_id} quest={quest} />
+          <MyQuestCard
+            key={quest.quest_id}
+            quest={quest}
+            startState={startStateByQuestId[quest.quest_id] ?? { kind: "idle" }}
+            onStartQuest={() => startQuest(quest.quest_id)}
+          />
         ))}
 
         <Text style={[styles.sectionTitle, styles.sectionTitleSpacing]}>Quests</Text>
@@ -95,7 +114,15 @@ export default function QuestsScreen() {
   );
 }
 
-function MyQuestCard({ quest }: { quest: MyQuest }) {
+function MyQuestCard({
+  quest,
+  startState,
+  onStartQuest,
+}: {
+  quest: MyQuest;
+  startState: StartState;
+  onStartQuest: () => void;
+}) {
   return (
     <View style={styles.myQuestCard}>
       <Text style={styles.myQuestLabel}>Quest title</Text>
@@ -104,7 +131,7 @@ function MyQuestCard({ quest }: { quest: MyQuest }) {
       <View style={styles.myQuestRow}>
         <View style={styles.myQuestRowItem}>
           <Text style={styles.myQuestLabel}>Status</Text>
-          <Text style={styles.myQuestValue}>{capitalize(quest.participation_status)}</Text>
+          <Text style={styles.myQuestValue}>{formatStatus(quest.participation_status)}</Text>
         </View>
         <View style={styles.myQuestRowItem}>
           <Text style={styles.myQuestLabel}>Progress</Text>
@@ -115,6 +142,22 @@ function MyQuestCard({ quest }: { quest: MyQuest }) {
           <Text style={styles.myQuestValue}>{quest.points_reward ?? 0} points</Text>
         </View>
       </View>
+
+      {quest.participation_status === "joined" && (
+        <Pressable
+          style={styles.startQuestButton}
+          onPress={onStartQuest}
+          disabled={startState.kind === "loading"}
+        >
+          {startState.kind === "loading" ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.startQuestButtonText}>Start Quest</Text>
+          )}
+        </Pressable>
+      )}
+
+      {startState.kind === "error" && <Text style={styles.myQuestsErrorText}>{startState.message}</Text>}
     </View>
   );
 }
@@ -206,6 +249,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: colors.textPrimary,
+  },
+  startQuestButton: {
+    marginTop: 12,
+    backgroundColor: colors.brandGreenDark,
+    borderRadius: 999,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  startQuestButtonText: {
+    color: "#fff",
+    fontSize: 13.5,
+    fontWeight: "700",
   },
   screen: {
     flex: 1,

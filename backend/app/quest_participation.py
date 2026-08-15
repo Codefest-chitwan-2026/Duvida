@@ -18,6 +18,10 @@ class AlreadyJoined(Exception):
     pass
 
 
+class QuestNotAccepted(Exception):
+    pass
+
+
 def fetch_quest_by_id(quest_id: str) -> Optional[dict]:
     response = get_client().table("quests").select("*").eq("id", quest_id).limit(1).execute()
     return response.data[0] if response.data else None
@@ -54,6 +58,24 @@ def accept_quest(quest_id: str) -> dict:
         "points_awarded": 0,
     }
     response = get_client().table("quest_participants").insert(row).execute()
+    return response.data[0]
+
+
+def start_quest(quest_id: str) -> dict:
+    """Mark an already-accepted quest as in progress. Raises QuestNotAccepted if not joined."""
+    user_id = DEFAULT_USER_ID
+
+    if not has_already_joined(quest_id, user_id):
+        raise QuestNotAccepted(quest_id)
+
+    response = (
+        get_client()
+        .table("quest_participants")
+        .update({"status": "in_progress", "progress_percent": 50})
+        .eq("quest_id", quest_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
     return response.data[0]
 
 

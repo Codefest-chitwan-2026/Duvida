@@ -12,7 +12,14 @@ from .document_loader import load_knowledge_text
 from .gemini_client import ask_ecobot
 from .local_responses import match_local_response
 from .quest_generator import InvalidGeneratedQuest, generate_quest_for_issue, insert_quest
-from .quest_participation import AlreadyJoined, QuestNotFound, accept_quest, fetch_my_quests
+from .quest_participation import (
+    AlreadyJoined,
+    QuestNotAccepted,
+    QuestNotFound,
+    accept_quest,
+    fetch_my_quests,
+    start_quest,
+)
 from .retrieval import format_retrieved_chunks, retrieve
 from .schemas import ChatReply, ChatRequest, CommunityIssue, MyQuest
 
@@ -91,5 +98,15 @@ def accept_quest_endpoint(quest_id: str):
         raise HTTPException(status_code=404, detail="Quest not found") from exc
     except AlreadyJoined as exc:
         raise HTTPException(status_code=409, detail="Already joined this quest") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
+
+
+@app.post("/quests/{quest_id}/start")
+def start_quest_endpoint(quest_id: str):
+    try:
+        return start_quest(quest_id)
+    except QuestNotAccepted as exc:
+        raise HTTPException(status_code=404, detail="Quest not accepted yet") from exc
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc
