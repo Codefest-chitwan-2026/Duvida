@@ -12,6 +12,7 @@ from .document_loader import load_knowledge_text
 from .gemini_client import ask_ecobot
 from .local_responses import match_local_response
 from .quest_generator import InvalidGeneratedQuest, generate_quest_for_issue, insert_quest
+from .quest_participation import AlreadyJoined, QuestNotFound, accept_quest
 from .retrieval import format_retrieved_chunks, retrieve
 from .schemas import ChatReply, ChatRequest, CommunityIssue
 
@@ -72,3 +73,15 @@ def generate_quest(issue_id: str):
         return insert_quest(quest)
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Could not save the generated quest") from exc
+
+
+@app.post("/quests/{quest_id}/accept")
+def accept_quest_endpoint(quest_id: str):
+    try:
+        return accept_quest(quest_id)
+    except QuestNotFound as exc:
+        raise HTTPException(status_code=404, detail="Quest not found") from exc
+    except AlreadyJoined as exc:
+        raise HTTPException(status_code=409, detail="Already joined this quest") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Supabase is currently unavailable") from exc

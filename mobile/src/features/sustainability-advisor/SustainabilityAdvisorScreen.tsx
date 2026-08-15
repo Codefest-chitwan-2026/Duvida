@@ -52,6 +52,7 @@ type CommunityIssue = {
 };
 
 type GeneratedQuest = {
+  id: string;
   title: string;
   description: string;
   quest_type: string;
@@ -59,11 +60,17 @@ type GeneratedQuest = {
   status: string;
 };
 
+type AcceptanceState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'accepted' };
+
 type QuestCardState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'success'; quest: GeneratedQuest };
+  | { status: 'success'; quest: GeneratedQuest; acceptance: AcceptanceState };
 
 const introChips: QuickReply[] = [
   { icon: 'leaf-outline', label: 'Sustainability Tips' },
@@ -125,10 +132,12 @@ function IssueCard({
   issue,
   questState,
   onGenerateQuest,
+  onAcceptQuest,
 }: {
   issue: CommunityIssue;
   questState: QuestCardState;
   onGenerateQuest: () => void;
+  onAcceptQuest: () => void;
 }) {
   const location = [issue.address, issue.city].filter(Boolean).join(', ') || 'Location not specified';
 
@@ -157,6 +166,29 @@ function IssueCard({
             <Text style={styles.generatedQuestMeta}>🏷️ {questState.quest.quest_type}</Text>
             <Text style={styles.generatedQuestMeta}>⭐ {questState.quest.points_reward} pts</Text>
           </View>
+
+          {questState.acceptance.kind === 'accepted' ? (
+            <View style={styles.acceptedBox}>
+              <Text style={styles.acceptedText}>✅ Quest Accepted</Text>
+              <Text style={styles.acceptedStatusText}>Status: Joined</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.acceptQuestButton}
+              onPress={onAcceptQuest}
+              disabled={questState.acceptance.kind === 'loading'}
+            >
+              {questState.acceptance.kind === 'loading' ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.acceptQuestButtonText}>Accept Quest</Text>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {questState.acceptance.kind === 'error' && (
+            <Text style={styles.errorText}>{questState.acceptance.message}</Text>
+          )}
         </View>
       ) : (
         <TouchableOpacity
@@ -302,10 +334,40 @@ export default function SustainabilityAdvisorScreen({
         throw new Error(`Request failed (${response.status})`);
       }
       const quest: GeneratedQuest = await response.json();
-      setQuestStateByIssueId((prev) => ({ ...prev, [issueId]: { status: 'success', quest } }));
+      setQuestStateByIssueId((prev) => ({
+        ...prev,
+        [issueId]: { status: 'success', quest, acceptance: { kind: 'idle' } },
+      }));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setQuestStateByIssueId((prev) => ({ ...prev, [issueId]: { status: 'error', message } }));
+    }
+  };
+
+  const acceptQuest = async (issueId: string, questId: string) => {
+    setQuestStateByIssueId((prev) => {
+      const current = prev[issueId];
+      if (current?.status !== 'success') return prev;
+      return { ...prev, [issueId]: { ...current, acceptance: { kind: 'loading' } } };
+    });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/quests/${questId}/accept`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      setQuestStateByIssueId((prev) => {
+        const current = prev[issueId];
+        if (current?.status !== 'success') return prev;
+        return { ...prev, [issueId]: { ...current, acceptance: { kind: 'accepted' } } };
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setQuestStateByIssueId((prev) => {
+        const current = prev[issueId];
+        if (current?.status !== 'success') return prev;
+        return { ...prev, [issueId]: { ...current, acceptance: { kind: 'error', message } } };
+      });
     }
   };
 
@@ -435,6 +497,12 @@ export default function SustainabilityAdvisorScreen({
                 issue={issue}
                 questState={questStateByIssueId[issue.id] ?? { status: 'idle' }}
                 onGenerateQuest={() => generateQuest(issue.id)}
+                onAcceptQuest={() => {
+                  const state = questStateByIssueId[issue.id];
+                  if (state?.status === 'success') {
+                    acceptQuest(issue.id, state.quest.id);
+                  }
+                }}
               />
             ))}
           </View>
@@ -595,8 +663,19 @@ const styles = StyleSheet.create({
   generatedQuestLabel: { fontSize: 11, color: colors.primaryDark, fontWeight: '700', marginBottom: 4 },
   generatedQuestTitle: { fontSize: 14, fontWeight: '700', color: colors.ink, marginBottom: 4 },
   generatedQuestDescription: { fontSize: 13, color: colors.ink, lineHeight: 18, marginBottom: 8 },
-  generatedQuestMetaRow: { flexDirection: 'row', gap: 14 },
+  generatedQuestMetaRow: { flexDirection: 'row', gap: 14, marginBottom: 10 },
   generatedQuestMeta: { fontSize: 12.5, color: colors.primaryDark, fontWeight: '600' },
+  acceptQuestButton: {
+    backgroundColor: colors.primaryDark,
+    borderRadius: 999,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptQuestButtonText: { color: '#fff', fontSize: 13.5, fontWeight: '700' },
+  acceptedBox: { alignItems: 'center', paddingVertical: 4 },
+  acceptedText: { fontSize: 14, fontWeight: '700', color: colors.primaryDark },
+  acceptedStatusText: { fontSize: 12, color: colors.primaryDark, marginTop: 2 },
   introCard: {
     flexDirection: 'row',
     gap: 12,
