@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://192.168.110.80:8000';
 
 const colors = {
   primary: '#1DA34C',
@@ -34,6 +34,36 @@ type BotBody =
 type Message =
   | { id: string; sender: 'user'; time: string; text: string }
   | { id: string; sender: 'bot'; time: string; body: BotBody };
+
+type ScreenMode = 'choose' | 'chat' | 'community';
+
+type CommunityIssue = {
+  id: string;
+  title: string | null;
+  description: string | null;
+  category_id: string | null;
+  status: string;
+  severity: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  city: string | null;
+  created_at: string | null;
+};
+
+type GeneratedQuest = {
+  title: string;
+  description: string;
+  quest_type: string;
+  points_reward: number;
+  status: string;
+};
+
+type QuestCardState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'success'; quest: GeneratedQuest };
 
 const introChips: QuickReply[] = [
   { icon: 'leaf-outline', label: 'Sustainability Tips' },
@@ -63,13 +93,6 @@ function QuickReplyChip({ icon, label, onPress }: QuickReply & { onPress?: () =>
   );
 }
 
-type ActionButtonConfig = { label: string; message: string };
-
-const actionButtons: ActionButtonConfig[] = [
-  { label: '🌱 Ask SDG Advice', message: 'I need SDG Advice' },
-  { label: '🏘️ Community Quests', message: 'Show me community sustainability quests' },
-];
-
 // Must match backend/data/sustainability_local_responses.json's "sdg_advice_menu"
 // answer exactly — the UI uses it to know when to follow up with the topic list.
 const SDG_ADVICE_MENU_PROMPT = 'Sure! 🌱 What would you like advice on?';
@@ -95,6 +118,62 @@ function BigActionButton({ label, onPress }: { label: string; onPress: () => voi
     <TouchableOpacity style={styles.bigButton} onPress={onPress}>
       <Text style={styles.bigButtonText}>{label}</Text>
     </TouchableOpacity>
+  );
+}
+
+function IssueCard({
+  issue,
+  questState,
+  onGenerateQuest,
+}: {
+  issue: CommunityIssue;
+  questState: QuestCardState;
+  onGenerateQuest: () => void;
+}) {
+  const location = [issue.address, issue.city].filter(Boolean).join(', ') || 'Location not specified';
+
+  return (
+    <View style={styles.issueCard}>
+      <Text style={styles.issueCardLabel}>Problem</Text>
+      <Text style={styles.issueCardTitle}>{issue.title ?? 'Untitled issue'}</Text>
+
+      <View style={styles.issueCardRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.issueCardLabel}>Severity</Text>
+          <Text style={styles.issueCardValue}>{issue.severity ?? 'Unknown'}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.issueCardLabel}>Location</Text>
+          <Text style={styles.issueCardValue}>{location}</Text>
+        </View>
+      </View>
+
+      {questState.status === 'success' ? (
+        <View style={styles.generatedQuestBox}>
+          <Text style={styles.generatedQuestLabel}>Generated Quest</Text>
+          <Text style={styles.generatedQuestTitle}>{questState.quest.title}</Text>
+          <Text style={styles.generatedQuestDescription}>{questState.quest.description}</Text>
+          <View style={styles.generatedQuestMetaRow}>
+            <Text style={styles.generatedQuestMeta}>🏷️ {questState.quest.quest_type}</Text>
+            <Text style={styles.generatedQuestMeta}>⭐ {questState.quest.points_reward} pts</Text>
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.generateQuestButton}
+          onPress={onGenerateQuest}
+          disabled={questState.status === 'loading'}
+        >
+          {questState.status === 'loading' ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.generateQuestButtonText}>Generate Quest</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {questState.status === 'error' && <Text style={styles.errorText}>{questState.message}</Text>}
+    </View>
   );
 }
 
@@ -178,13 +257,56 @@ export default function SustainabilityAdvisorScreen({
   const [activeTab, setActiveTab] = useState<TabKey>('report');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSelectedMode, setHasSelectedMode] = useState(false);
+  const [screenMode, setScreenMode] = useState<ScreenMode>('choose');
+  const [issues, setIssues] = useState<CommunityIssue[]>([]);
+  const [issuesLoading, setIssuesLoading] = useState(false);
+  const [issuesError, setIssuesError] = useState<string | null>(null);
+  const [questStateByIssueId, setQuestStateByIssueId] = useState<Record<string, QuestCardState>>({});
 
-  const canUseChatInput = hasSelectedMode && !isSending;
+  const canUseChatInput = screenMode === 'chat' && !isSending;
 
-  const handleActionButtonPress = (message: string) => {
-    setHasSelectedMode(true);
-    sendMessage(message);
+  const handleAskSdgAdvice = () => {
+    setScreenMode('chat');
+    sendMessage('I need SDG Advice');
+  };
+
+  const fetchIssues = async () => {
+    setIssuesError(null);
+    setIssuesLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/community/issues`);
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      const data: CommunityIssue[] = await response.json();
+      setIssues(data);
+    } catch (err) {
+      setIssuesError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setIssuesLoading(false);
+    }
+  };
+
+  const handleOpenCommunityQuests = () => {
+    setScreenMode('community');
+    fetchIssues();
+  };
+
+  const generateQuest = async (issueId: string) => {
+    setQuestStateByIssueId((prev) => ({ ...prev, [issueId]: { status: 'loading' } }));
+    try {
+      const response = await fetch(`${API_BASE_URL}/community/issues/${issueId}/generate-quest`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      const quest: GeneratedQuest = await response.json();
+      setQuestStateByIssueId((prev) => ({ ...prev, [issueId]: { status: 'success', quest } }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setQuestStateByIssueId((prev) => ({ ...prev, [issueId]: { status: 'error', message } }));
+    }
   };
 
   const sendMessage = async (text: string) => {
@@ -257,7 +379,7 @@ export default function SustainabilityAdvisorScreen({
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
       >
-        {hasSelectedMode ? (
+        {screenMode === 'chat' && (
           <>
             <View style={styles.introCard}>
               <BotAvatar size={56} />
@@ -285,7 +407,40 @@ export default function SustainabilityAdvisorScreen({
               )
             )}
           </>
-        ) : (
+        )}
+
+        {screenMode === 'community' && (
+          <View style={styles.communityContainer}>
+            <Text style={styles.communityHeading}>🏘️ Community Quests</Text>
+            <Text style={styles.communitySubheading}>
+              Real issues reported nearby — turn one into a quest.
+            </Text>
+
+            {issuesLoading && (
+              <View style={styles.communityStatusRow}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.communityStatusText}>Loading issues...</Text>
+              </View>
+            )}
+
+            {issuesError && <Text style={styles.errorText}>{issuesError}</Text>}
+
+            {!issuesLoading && !issuesError && issues.length === 0 && (
+              <Text style={styles.communityStatusText}>No active issues right now.</Text>
+            )}
+
+            {issues.map((issue) => (
+              <IssueCard
+                key={issue.id}
+                issue={issue}
+                questState={questStateByIssueId[issue.id] ?? { status: 'idle' }}
+                onGenerateQuest={() => generateQuest(issue.id)}
+              />
+            ))}
+          </View>
+        )}
+
+        {screenMode === 'choose' && (
           <View style={styles.chooseModeContainer}>
             <BotAvatar size={72} />
             <Text style={styles.chooseModeTitle}>
@@ -293,13 +448,8 @@ export default function SustainabilityAdvisorScreen({
             </Text>
             <Text style={styles.chooseModeSubtitle}>Choose how you'd like to start:</Text>
             <View style={styles.bigButtonGroup}>
-              {actionButtons.map((button) => (
-                <BigActionButton
-                  key={button.label}
-                  label={button.label}
-                  onPress={() => handleActionButtonPress(button.message)}
-                />
-              ))}
+              <BigActionButton label="🌱 Ask SDG Advice" onPress={handleAskSdgAdvice} />
+              <BigActionButton label="🏘️ Community Quests" onPress={handleOpenCommunityQuests} />
             </View>
           </View>
         )}
@@ -307,12 +457,12 @@ export default function SustainabilityAdvisorScreen({
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      <View style={[styles.inputBar, !hasSelectedMode && styles.inputBarDisabled]}>
+      <View style={[styles.inputBar, screenMode !== 'chat' && styles.inputBarDisabled]}>
         <Ionicons name="leaf-outline" size={18} color={colors.primary} style={styles.inputIcon} />
         <TextInput
           style={styles.input}
           placeholder={
-            hasSelectedMode ? 'Type your message...' : 'Choose an option above to start chatting...'
+            screenMode === 'chat' ? 'Type your message...' : 'Choose an option above to start chatting...'
           }
           placeholderTextColor={colors.subtext}
           value={draft}
@@ -413,6 +563,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bigButtonText: { fontSize: 16, fontWeight: '700', color: colors.ink },
+  communityContainer: { flex: 1 },
+  communityHeading: { fontSize: 18, fontWeight: '700', color: colors.ink, marginBottom: 4 },
+  communitySubheading: { fontSize: 13, color: colors.subtext, marginBottom: 16 },
+  communityStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  communityStatusText: { fontSize: 13, color: colors.subtext },
+  issueCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+  },
+  issueCardLabel: { fontSize: 11, color: colors.subtext, fontWeight: '600', marginBottom: 2 },
+  issueCardTitle: { fontSize: 15, fontWeight: '700', color: colors.ink, marginBottom: 10 },
+  issueCardRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  issueCardValue: { fontSize: 13, color: colors.ink, textTransform: 'capitalize' },
+  generateQuestButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  generateQuestButtonText: { color: '#fff', fontSize: 13.5, fontWeight: '700' },
+  generatedQuestBox: {
+    backgroundColor: '#E9F9EF',
+    borderRadius: 12,
+    padding: 12,
+  },
+  generatedQuestLabel: { fontSize: 11, color: colors.primaryDark, fontWeight: '700', marginBottom: 4 },
+  generatedQuestTitle: { fontSize: 14, fontWeight: '700', color: colors.ink, marginBottom: 4 },
+  generatedQuestDescription: { fontSize: 13, color: colors.ink, lineHeight: 18, marginBottom: 8 },
+  generatedQuestMetaRow: { flexDirection: 'row', gap: 14 },
+  generatedQuestMeta: { fontSize: 12.5, color: colors.primaryDark, fontWeight: '600' },
   introCard: {
     flexDirection: 'row',
     gap: 12,
